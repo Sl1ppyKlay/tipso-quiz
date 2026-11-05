@@ -3,169 +3,193 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ТиПСО: квиз</title>
+<meta name="theme-color" content="#f5f6fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1030" media="(prefers-color-scheme: dark)">
+<title>ТиПСО: учить</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Golos+Text:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: игровой экран одной колонкой ~720px; выбор темы и ответы — крупные карточки 2×2 */
+/* Layout: страница модуля (режимы + список терминов) и полноэкранные режимы с верхней панелью и нижней панелью кнопок */
 :root{
-  --bg:#eef0fa; --paper:#ffffff; --fg:#151a33; --muted:#5d6488; --line:#d8dcef;
-  --ink:#3046d6; --ink-2:#7a3fe0; --ink-soft:#e5e9ff; --gold:#f2b400; --gold-soft:#fff3c4;
-  --ok:#0f8f5c; --ok-soft:#d9f6e8; --bad:#d23452; --bad-soft:#fde2e8; --shadow:0 6px 0 #c9cee8;
-  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --bg:#f5f6fb; --paper:#ffffff; --fg:#1d2240; --muted:#626889; --line:#e1e4f2;
+  --ink:#4b56e8; --ink-dark:#3640c4; --ink-soft:#eceeff;
+  --ok:#14996a; --ok-soft:#ddf5ea; --bad:#dc4560; --bad-soft:#fde6ea; --gold:#f5b70a;
+  --shadow:0 2px 10px rgba(30,40,100,.08); --shadow-lg:0 10px 30px rgba(30,40,100,.14);
+  --f-display:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root{
-  --bg:#0f1120; --paper:#1a1d33; --fg:#eceefa; --muted:#a0a6cc; --line:#2d3253;
-  --ink:#8b9cff; --ink-2:#b48cff; --ink-soft:#252c58; --gold:#ffcf3f; --gold-soft:#3d3412;
-  --ok:#47d69a; --ok-soft:#123a2a; --bad:#ff7891; --bad-soft:#401a26; --shadow:0 6px 0 #0a0c18; color-scheme:dark}}
+  --bg:#0d1030; --paper:#1b1f45; --fg:#f1f2ff; --muted:#a6abd4; --line:#2d3364;
+  --ink:#8b95ff; --ink-dark:#6f7aff; --ink-soft:#252b5f;
+  --ok:#3fd598; --ok-soft:#12392d; --bad:#ff7b92; --bad-soft:#41192a; --gold:#ffcd47;
+  --shadow:0 2px 10px rgba(0,0,0,.35); --shadow-lg:0 10px 30px rgba(0,0,0,.45); color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5;min-height:100vh;
-  padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left))}
-.wrap{max-width:720px;margin:0 auto}
-button{font:inherit;cursor:pointer;color:inherit}
-button:focus-visible,a:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0 14px}
-.logo{font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.01em;text-decoration:none;color:var(--fg)}
-.logo span{color:var(--ink)}
-.toplinks{display:flex;gap:8px}
-.pill{font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper)}
-h1{font-family:var(--f-display);font-size:clamp(26px,6vw,40px);line-height:1.1;margin:8px 0 6px;text-wrap:balance}
-h2{font-family:var(--f-display);font-size:18px;margin:26px 0 10px}
-.sub{color:var(--muted);margin:0 0 18px}
-.stats{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
-.stat{font-family:var(--f-mono);font-size:13px;font-weight:700;padding:6px 10px;border-radius:8px;background:var(--paper);border:1px solid var(--line);font-variant-numeric:tabular-nums}
-/* карточки тем */
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.tcard{position:relative;text-align:left;border:2px solid var(--line);background:var(--paper);border-radius:18px;padding:16px;box-shadow:var(--shadow);
-  display:flex;flex-direction:column;gap:6px;min-height:150px;transition:transform .12s, border-color .12s}
-.tcard:hover{transform:translateY(-3px);border-color:var(--ink)}
-.tcard:active{transform:translateY(3px);box-shadow:none}
-.tcard .ic{font-family:var(--f-display);font-weight:800;font-size:26px;color:var(--ink);line-height:1}
-.tcard b{font-size:17px}
-.tcard small{color:var(--muted);font-size:13px}
-.tcard .meter{margin-top:auto;height:6px;border-radius:9px;background:var(--line);overflow:hidden}
-.tcard .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--ink),var(--ink-2))}
-.tcard .pct{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
-.tcard.wide{grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;gap:14px}
-.tcard.wide .ic{font-size:22px}
-.toggle{display:flex;align-items:center;gap:10px;margin:16px 0 0;font-weight:600;color:var(--muted)}
-.toggle input{width:20px;height:20px;accent-color:var(--ink)}
-/* игра */
-.hud{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.lives{font-size:22px;letter-spacing:2px;color:var(--bad)}
-.lives .lost{color:var(--line)}
-.score{font-family:var(--f-display);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
-.combo{font-family:var(--f-mono);font-weight:700;font-size:13px;padding:4px 9px;border-radius:8px;background:var(--gold-soft);color:var(--fg);border:1px solid var(--gold)}
-.combo.off{opacity:.35}
-.timer{height:8px;border-radius:9px;background:var(--line);overflow:hidden;margin:12px 0 4px}
-.timer i{display:block;height:100%;background:var(--ink);width:100%}
-.timer.low i{background:var(--bad)}
-.progress{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
-.qcard{background:var(--paper);border:2px solid var(--line);border-radius:22px;padding:22px 20px;margin:14px 0;box-shadow:var(--shadow);text-align:center}
-.qcard .tag{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink)}
-.qcard .qq{font-size:clamp(18px,4.4vw,23px);font-weight:700;line-height:1.3;margin:8px 0 0;text-wrap:balance}
-.answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;perspective:900px}
-.ans{position:relative;min-height:110px;border:2px solid var(--line);background:var(--paper);border-radius:16px;padding:14px 12px 12px 38px;text-align:left;
-  font-size:15px;font-weight:500;line-height:1.35;box-shadow:var(--shadow);transition:transform .12s,border-color .12s,background .2s;animation:deal .35s both}
-.ans:nth-child(2){animation-delay:.05s}.ans:nth-child(3){animation-delay:.1s}.ans:nth-child(4){animation-delay:.15s}
-@keyframes deal{from{opacity:0;transform:translateY(14px) rotateX(25deg)}to{opacity:1;transform:none}}
-.ans .k{position:absolute;left:11px;top:12px;font-family:var(--f-mono);font-weight:700;font-size:13px;color:var(--muted)}
-.ans:hover:not(:disabled){border-color:var(--ink);transform:translateY(-2px)}
-.ans:disabled{cursor:default}
-.ans.ok{background:var(--ok-soft);border-color:var(--ok);animation:pop .35s}
-.ans.bad{background:var(--bad-soft);border-color:var(--bad);animation:shake .4s}
-.ans.dim{opacity:.45}
-@keyframes pop{50%{transform:scale(1.04)}}
-@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
-.fb{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:var(--paper);border:1px solid var(--line)}
-.fb .v{font-weight:700}
-.fb .v.ok{color:var(--ok)} .fb .v.bad{color:var(--bad)}
-.fb p{margin:4px 0 0;color:var(--muted);font-size:15px}
-.float{position:fixed;left:50%;top:38%;transform:translateX(-50%);font-family:var(--f-display);font-weight:800;font-size:30px;color:var(--gold);pointer-events:none;animation:up 1s forwards;text-shadow:0 2px 0 var(--paper)}
-@keyframes up{to{opacity:0;transform:translate(-50%,-60px)}}
-.btn{border:none;border-radius:14px;padding:13px 20px;font-weight:700;background:var(--ink);color:#fff;box-shadow:0 4px 0 color-mix(in srgb,var(--ink) 60%,#000)}
-.btn:active{transform:translateY(3px);box-shadow:none}
-.btn.ghost{background:var(--paper);color:var(--fg);border:2px solid var(--line);box-shadow:none}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.end{text-align:center}
-.end .big{font-family:var(--f-display);font-weight:800;font-size:clamp(44px,12vw,72px);margin:6px 0;background:linear-gradient(90deg,var(--ink),var(--ink-2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.rank{display:inline-block;font-weight:700;padding:6px 14px;border-radius:999px;background:var(--gold-soft);border:1px solid var(--gold)}
-.miss{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;text-align:left}
-.miss b{display:block;margin-bottom:2px}
-.miss span{color:var(--ok);font-weight:600}
-/* флэш-карточки */
-.flip{perspective:1200px;margin:14px 0}
-.flip-in{position:relative;min-height:280px;transition:transform .5s;transform-style:preserve-3d;cursor:pointer}
-.flip.on .flip-in{transform:rotateY(180deg)}
-.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--paper);border:2px solid var(--line);border-radius:22px;box-shadow:var(--shadow);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;gap:10px}
-.face.back{transform:rotateY(180deg);border-color:var(--ink)}
-.face .t{font-family:var(--f-display);font-size:clamp(20px,5vw,28px);font-weight:700;line-height:1.2;text-wrap:balance}
-.face .d{font-size:18px;font-weight:600;text-wrap:balance}
-.face .x{font-size:14px;color:var(--muted);text-align:left;max-height:120px;overflow:auto}
-.hint{font-size:13px;color:var(--muted)}
-.btn.no{background:var(--bad);box-shadow:0 4px 0 color-mix(in srgb,var(--bad) 60%,#000)}
-.btn.yes{background:var(--ok);box-shadow:0 4px 0 color-mix(in srgb,var(--ok) 60%,#000)}
-.center{justify-content:center}
-button,a{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-/* верхняя панель игры: второстепенные действия */
-.toolbar{display:flex;align-items:center;gap:6px;margin:10px 0 0}
-.toolbar .progress{flex:1;text-align:center;font-variant-numeric:tabular-nums}
-.tool{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 11px;font-size:14px;font-weight:600;min-height:40px}
-.tool:disabled{opacity:.35;cursor:default}
-.tool.danger{background:var(--bad);border-color:var(--bad);color:#fff}
-/* нижняя выезжающая панель: результат + главная кнопка, всегда под пальцем */
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--paper);border-top:2px solid var(--line);
-  padding:12px max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
-  box-shadow:0 -8px 24px rgba(0,0,0,.18);animation:slideup .22s ease-out}
-.sheet.good{background:var(--ok-soft);border-top-color:var(--ok)}
-.sheet.badsheet{background:var(--bad-soft);border-top-color:var(--bad)}
-.sheet-in{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
-.sheet .fb{margin:0;padding:0;border:0;background:none;max-height:28vh;overflow:auto}
-.sheet .fb p{color:var(--fg);opacity:.8}
-.btn.main{width:100%;font-size:18px;padding:16px;border-radius:16px;color:var(--paper)}
-.qcard .qq.long{font-size:17px;font-weight:600}
-.sheet.good .btn.main{background:var(--ok);box-shadow:0 4px 0 color-mix(in srgb,var(--ok) 60%,#000)}
-.sheet.badsheet .btn.main{background:var(--bad);box-shadow:0 4px 0 color-mix(in srgb,var(--bad) 60%,#000)}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5;min-height:100vh;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+a{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left))}
+/* верхняя панель */
+.bar{position:sticky;top:0;z-index:15;background:var(--paper);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.bar-in{max-width:760px;margin:0 auto;display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:8px;min-height:56px;
+  padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
+.bar-title{text-align:center;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:none;background:transparent;display:grid;place-items:center;font-size:22px;color:var(--muted)}
+.iconbtn:hover{background:var(--ink-soft);color:var(--fg)}
+.bar-right{min-width:44px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted);font-size:15px}
+.thin{height:4px;background:var(--line)}
+.thin i{display:block;height:100%;background:var(--ink);transition:width .3s}
+/* главная */
+.home-head{padding:22px 0 6px}
+.home-head h1{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,6.5vw,36px);line-height:1.15;margin:0;text-wrap:balance}
+.home-head p{margin:6px 0 0;color:var(--muted)}
+.seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:16px -16px 0;padding:2px 16px}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:0 0 auto;border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.seg small{opacity:.75;font-weight:500;margin-left:4px}
+.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0 0}
+.mode{display:flex;align-items:center;gap:12px;text-align:left;border:none;background:var(--paper);border-radius:16px;padding:16px 14px;box-shadow:var(--shadow);
+  border-bottom:4px solid transparent;transition:transform .12s,border-color .12s;min-height:76px}
+.mode:hover{border-bottom-color:var(--ink)}
+.mode:active{transform:scale(.98)}
+.mode .ic{flex:0 0 40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--ink-soft);color:var(--ink)}
+.mode b{display:block;font-family:var(--f-display);font-size:16px}
+.mode small{display:block;color:var(--muted);font-size:13px;line-height:1.3}
+.panel{background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+.resume{display:flex;align-items:center;gap:12px;margin-top:12px;border:2px solid var(--ink)}
+.resume .grow{flex:1;min-width:0}
+.resume b{display:block}
+.resume small{color:var(--muted)}
+h2{font-family:var(--f-display);font-size:19px;margin:28px 0 10px}
+.prog{display:grid;gap:10px}
+.prog-row{display:grid;grid-template-columns:110px 1fr 44px;align-items:center;gap:10px;font-size:14px}
+.prog-row .track{height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+.prog-row .track i{display:block;height:100%;background:var(--ok)}
+.prog-row span:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.terms{display:grid;gap:8px}
+.trow{background:var(--paper);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:14px}
+.trow b{font-weight:600}
+.trow div{color:var(--fg)}
+.linkbtn{border:none;background:none;color:var(--ink);font-weight:700;padding:10px 0}
+.foot{display:flex;flex-wrap:wrap;gap:8px;margin:28px 0 40px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 14px;font-weight:600;font-size:14px;color:var(--fg);text-decoration:none}
+.chip.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pill{font-size:13px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--paper);box-shadow:var(--shadow);font-variant-numeric:tabular-nums}
+/* кнопки */
+.btn{border:none;border-radius:14px;padding:15px 18px;font-weight:700;font-size:17px;background:var(--ink);color:#fff;box-shadow:0 3px 0 var(--ink-dark)}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn:disabled{background:var(--line);color:var(--muted);box-shadow:none;cursor:default}
+.btn.ghost{background:var(--paper);color:var(--fg);border:1.5px solid var(--line);box-shadow:none}
+.btn.ghost:disabled{opacity:.45;background:var(--paper)}
+.btn.red{background:var(--bad);box-shadow:0 3px 0 color-mix(in srgb,var(--bad) 65%,#000)}
+.btn.green{background:var(--ok);box-shadow:0 3px 0 color-mix(in srgb,var(--ok) 65%,#000)}
+/* нижняя панель */
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--paper);border-top:1px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.sheet.good{background:var(--ok-soft);border-top:2px solid var(--ok)}
+.sheet.badsheet{background:var(--bad-soft);border-top:2px solid var(--bad)}
+.sheet.anim{animation:slideup .2s ease-out}
 @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.sheet-in{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
 .navbar{display:grid;grid-template-columns:1fr 2fr;gap:10px}
-.navbar .btn{font-size:17px;padding:16px 10px;border-radius:16px}
-.navbar .btn:disabled{opacity:.45;cursor:default;box-shadow:none}
-.btn.main:disabled{background:var(--line);color:var(--muted)}
-.extra-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:22px 0 8px}
-.extra-actions .tool{font-size:13px;color:var(--muted);font-weight:500}
-.extra-actions .tool.danger{color:#fff}
-.flashbar{display:grid;grid-template-columns:64px 1fr 1fr;gap:10px}
-.flashbar .btn:disabled{opacity:.4;box-shadow:none}
-.flashbar .btn{font-size:18px;padding:16px}
-.actions{position:sticky;bottom:0;z-index:4;background:var(--bg);padding:10px 0 max(10px,env(safe-area-inset-bottom));margin-top:14px;justify-content:space-between}
-@media (max-width:520px){
-  body{padding-bottom:16px}
+.fb{max-height:30vh;overflow:auto}
+.fb .v{font-weight:800}
+.fb .v.ok{color:var(--ok)} .fb .v.bad{color:var(--bad)}
+.fb p{margin:4px 0 0;font-size:15px;opacity:.85}
+.sheet.good .btn{background:var(--ok);box-shadow:0 3px 0 color-mix(in srgb,var(--ok) 65%,#000)}
+.sheet.badsheet .btn:not(.ghost){background:var(--bad);box-shadow:0 3px 0 color-mix(in srgb,var(--bad) 65%,#000)}
+.sheet .btn.ghost{background:var(--paper)}
+/* вопрос */
+.hud{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}
+.lives{font-size:20px;letter-spacing:2px;color:var(--bad)}
+.lives .lost{color:var(--line)}
+.combo{font-weight:800;font-size:13px;padding:4px 10px;border-radius:999px;background:var(--gold);color:#3a2a00}
+.combo.off{opacity:.3}
+.timer{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin-top:10px}
+.timer i{display:block;height:100%;background:var(--ink)}
+.timer.low i{background:var(--bad)}
+.qcard{background:var(--paper);border-radius:18px;box-shadow:var(--shadow);padding:20px 18px;margin:14px 0 12px}
+.qcard .tag{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.qcard .qq{font-size:clamp(18px,4.6vw,22px);font-weight:600;line-height:1.35;margin:10px 0 0;text-wrap:pretty}
+.qcard .qq.long{font-size:17px}
+.choose{font-size:14px;font-weight:600;color:var(--muted);margin:0 0 8px}
+.answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ans{position:relative;text-align:left;border:2px solid var(--line);background:var(--paper);border-radius:14px;padding:14px 14px 14px 42px;font-size:15.5px;line-height:1.35;min-height:58px;transition:border-color .12s}
+.ans .k{position:absolute;left:12px;top:13px;width:22px;height:22px;border-radius:7px;background:var(--ink-soft);color:var(--ink);font-size:12px;font-weight:800;display:grid;place-items:center}
+.ans:hover:not(:disabled){border-color:var(--ink)}
+.ans:disabled{cursor:default}
+.ans.ok{border-color:var(--ok);background:var(--ok-soft)}
+.ans.bad{border-color:var(--bad);background:var(--bad-soft);animation:shake .35s}
+.ans.dim{opacity:.45}
+@keyframes shake{25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+.under{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:22px 0 10px}
+.under .chip{font-size:13px;color:var(--muted);font-weight:500;padding:8px 12px}
+.under .chip.danger{color:#fff}
+.float{position:fixed;left:50%;top:32%;transform:translateX(-50%);font-family:var(--f-display);font-weight:800;font-size:30px;color:var(--gold);pointer-events:none;animation:up 1s forwards;z-index:30}
+@keyframes up{to{opacity:0;transform:translate(-50%,-60px)}}
+/* карточки */
+.counters{display:flex;justify-content:space-between;margin:14px 0 10px}
+.cnt{font-weight:800;font-size:14px;padding:5px 12px;border-radius:999px;font-variant-numeric:tabular-nums}
+.cnt.no{color:var(--bad);border:2px solid var(--bad)}
+.cnt.yes{color:var(--ok);border:2px solid var(--ok)}
+.stage{position:relative;height:min(58vh,440px);perspective:1400px;touch-action:pan-y}
+.fcard{position:absolute;inset:0;transition:transform .35s ease;transform-style:preserve-3d;cursor:pointer;will-change:transform}
+.fcard.dragging{transition:none}
+.fflip{position:absolute;inset:0;transition:transform .45s;transform-style:preserve-3d}
+.fcard.on .fflip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--paper);border-radius:22px;box-shadow:var(--shadow-lg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 22px;gap:12px;overflow:auto}
+.face.back{transform:rotateY(180deg)}
+.face .lbl{position:absolute;top:14px;left:18px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.face .t{font-family:var(--f-display);font-size:clamp(22px,6vw,32px);font-weight:800;line-height:1.2;text-wrap:balance}
+.face .d{font-size:clamp(17px,4.4vw,20px);font-weight:500;line-height:1.45;text-wrap:pretty}
+.face .x{font-size:14px;color:var(--muted);line-height:1.4}
+.stamp{position:absolute;top:22px;padding:6px 12px;border-radius:10px;font-weight:800;font-size:18px;opacity:0;border:3px solid;z-index:2;pointer-events:none;background:var(--paper)}
+.stamp.yes{right:20px;color:var(--ok);transform:rotate(8deg)}
+.stamp.no{left:20px;color:var(--bad);transform:rotate(-8deg)}
+.hint{font-size:13px;color:var(--muted);text-align:center;margin:12px 0 0}
+.flashbar{display:grid;grid-template-columns:56px 1fr 1fr;gap:10px}
+.flashbar .btn{padding:15px 8px}
+/* подбор */
+.mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.tile{border:2px solid var(--line);background:var(--paper);border-radius:14px;padding:10px 8px;min-height:96px;font-size:13.5px;line-height:1.3;box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:center;text-align:center;transition:opacity .25s,transform .25s,border-color .12s;word-break:break-word;hyphens:auto}
+.tile.term{font-weight:700}
+.tile.sel{border-color:var(--ink);background:var(--ink-soft)}
+.tile.wrong{border-color:var(--bad);background:var(--bad-soft);animation:shake .35s}
+.tile.gone{opacity:0;transform:scale(.85);pointer-events:none}
+/* итоги */
+.end{text-align:center;padding-top:24px}
+.big{font-family:var(--f-display);font-weight:800;font-size:clamp(44px,13vw,72px);margin:4px 0;color:var(--ink)}
+.rank{display:inline-block;font-weight:800;padding:6px 14px;border-radius:999px;background:var(--gold);color:#3a2a00}
+.endbtns{display:grid;gap:10px;max-width:420px;margin:20px auto 0}
+.miss{background:var(--paper);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin:8px 0;text-align:left}
+.miss small{color:var(--muted);font-size:12px}
+.miss b{display:block;margin:2px 0}
+.miss span{color:var(--ok);font-weight:600}
+.miss p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.toggle{display:flex;align-items:center;gap:10px;margin:14px 0 0;font-weight:600;color:var(--muted);font-size:14px}
+.toggle input{width:20px;height:20px;accent-color:var(--ink)}
+@media (max-width:560px){
   .answers{grid-template-columns:1fr;gap:8px}
-  .ans{min-height:56px;padding:13px 12px 13px 36px;font-size:15.5px}
-  .qcard{padding:18px 14px;margin:10px 0}
-  .grid{gap:10px}.tcard{min-height:130px;padding:14px}
-  .btn{padding:14px 16px}
-  .actions .btn{flex:1 1 auto}
-  .actions>.row{flex:1 1 auto}
-  .flip-in{min-height:300px}
-  .float{top:30%}
+  .trow{grid-template-columns:1fr;gap:4px}
+  .trow b{color:var(--ink)}
+  .mode{padding:14px 12px;gap:10px}
+  .mode .ic{flex-basis:36px;height:36px}
+  .mode small{display:none}
+  .mode{min-height:64px}
+  .prog-row{grid-template-columns:96px 1fr 40px}
 }
+@media (min-width:700px){.mgrid{grid-template-columns:repeat(4,minmax(0,1fr))}.tile{min-height:110px;font-size:14.5px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <a class="logo" href="#" id="home">ТиПСО<span>.квиз</span></a>
-    <div class="toplinks"><a class="pill" href="konspekt.html">Конспект</a><a class="pill" href="tipso-shpargalka.pdf" target="_blank" rel="noopener">PDF</a></div>
-  </div>
-  <main id="app"></main>
-</div>
+<div id="app"></div>
 <script src="data.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -173,157 +197,164 @@ const app=$("#app");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const store={get(k,d){try{const v=localStorage.getItem("tipsoq_"+k);const p=v?JSON.parse(v):null;return p??d}catch(e){return d}},set(k,v){try{localStorage.setItem("tipsoq_"+k,JSON.stringify(v))}catch(e){}}};
+const firstSentence=s=>{const m=s.match(/^.+?[.!?](\s|$)/);return m?m[0].trim():s};
+const ICON={
+  cards:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="14" height="14" rx="2.5"/><path d="M7 3h11.5A2.5 2.5 0 0 1 21 5.5V17"/></svg>',
+  learn:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></svg>',
+  test:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  match:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><path d="m14 17 2 2 4-4" stroke-linecap="round"/></svg>'
+};
 
-// ===== вопросы =====
+// ===== наборы =====
+const TOPICS=[
+  {k:"terms",name:"Термины",n:TERMS.length},
+  {k:"facts",name:"Экспресс-вопросы",n:FACTS.length},
+  {k:"people",name:"Персоналии",n:PEOPLE.length},
+  {k:"mix",name:"Всё",n:TERMS.length+FACTS.length+PEOPLE.length}
+];
+const topicName=k=>k==="mistakes"?"Работа над ошибками":(TOPICS.find(t=>t.k===k)||{}).name||"";
+function cardsFor(k){
+  const t=TERMS.map(x=>({id:"c-t-"+x[0],f:x[0],b:x[1],x:"",lf:"термин",lb:"определение"}));
+  const p=PEOPLE.map(x=>({id:"c-p-"+x[0],f:x[0],b:x[2],x:x[1],lf:"персоналия",lb:"чем известен"}));
+  const f=FACTS.map(x=>({id:"c-f-"+x[0],f:x[0],b:x[1],x:x[3],lf:"вопрос",lb:"ответ"}));
+  return k==="terms"?t:k==="people"?p:k==="facts"?f:[...t,...f,...p];
+}
+function pairsFor(k){
+  const t=TERMS.map(x=>[x[0],firstSentence(x[1])]);
+  const p=PEOPLE.map(x=>[x[0],x[2]]);
+  const f=FACTS.map(x=>[x[0],x[1]]);
+  return k==="terms"?t:k==="people"?p:k==="facts"?f:[...t,...p];
+}
 function allQuestions(){
   const out={terms:[],facts:[],people:[]};
   TERMS.forEach((t,i)=>{
     const o=shuffle(TERMS.filter((_,j)=>j!==i)).slice(0,3);
-    out.terms.push({id:"td"+i,tag:"термин → определение",q:`${t[0]} — это…`,a:t[1],w:o.map(x=>x[1]),x:t[2]});
-    out.terms.push({id:"dt"+i,tag:"определение → термин",q:`«${t[1]}»`,a:t[0],w:o.map(x=>x[0]),x:""});
+    out.terms.push({id:"td"+i,tag:"термин → определение",q:t[0],a:t[1],w:o.map(x=>x[1]),x:t[2]});
+    out.terms.push({id:"dt"+i,tag:"определение → термин",q:t[1],a:t[0],w:o.map(x=>x[0]),x:""});
   });
   PEOPLE.forEach((p,i)=>{
     const o=shuffle(PEOPLE.filter((_,j)=>j!==i)).slice(0,3);
-    out.people.push({id:"pw"+i,tag:"кто это?",q:`${p[2][0].toUpperCase()+p[2].slice(1)}`,a:p[0],w:o.map(x=>x[0]),x:`${p[0]} — ${p[1]}`});
+    out.people.push({id:"pw"+i,tag:"кто это?",q:p[2][0].toUpperCase()+p[2].slice(1),a:p[0],w:o.map(x=>x[0]),x:`${p[0]} — ${p[1]}`});
     out.people.push({id:"pv"+i,tag:"чем известен?",q:`${p[0]} (${p[1]})`,a:p[2],w:o.map(x=>x[2]),x:""});
   });
   FACTS.forEach((f,i)=>out.facts.push({id:"ff"+i,tag:"экспресс-вопрос",q:f[0],a:f[1],w:f[2],x:f[3]}));
   return out;
 }
 const QS=allQuestions();
-const TOPICS=[
-  {k:"terms",ic:"26",name:"Термины",desc:"Определения из блица",list:()=>QS.terms},
-  {k:"facts",ic:"?!",name:"Экспресс-вопросы",desc:"ОМ, модели PR, история, закон",list:()=>QS.facts},
-  {k:"people",ic:"Кто",name:"Персоналии",desc:"Кто что сделал",list:()=>QS.people},
-  {k:"mix",ic:"∞",name:"Микс",desc:"Всё вперемешку",list:()=>[...QS.terms,...QS.facts,...QS.people]}
-];
+const qList=k=>k==="mix"?[...QS.terms,...QS.facts,...QS.people]:QS[k];
 const mastered=()=>store.get("mastered",{});
 const mistakes=()=>store.get("mistakes",{});
-function topicPct(t){const m=mastered();const l=t.list();return Math.round(l.filter(q=>m[q.id]).length/l.length*100)}
+const pct=k=>{const m=mastered(),l=qList(k);return Math.round(l.filter(q=>m[q.id]).length/l.length*100)};
+let topic=store.get("topic","terms");
 
-// ===== главный экран =====
-function home(){
-  document.body.style.paddingBottom="";
+// ===== каркас экранов =====
+function screen({left="close",title="",right="",progress=null,body="",sheet="",sheetClass=""}){
   stopTimer();
-  const best=store.get("best",0),mis=Object.keys(mistakes()).length;
-  const all=TOPICS[3];
-  const sg=store.get("game",null);
-  const sgName=sg?(sg.k==="mistakes"?"Работа над ошибками":(TOPICS.find(t=>t.k===sg.k)||{}).name):"";
-  app.innerHTML=`
-  <h1>Выучи ТиПСО, играя</h1>
-  <p class="sub">Выбирай карточку с ответом. 3 жизни, таймер, комбо за серию верных ответов. Прогресс сохраняется на этом устройстве.</p>
-  <div class="stats"><span class="stat">рекорд ${best}</span><span class="stat">выучено ${topicPct(all)}%</span><span class="stat">ошибок ${mis}</span></div>
-  ${sg&&sg.list&&sg.i<sg.list.length?`<div class="grid" style="margin-top:14px"><button class="tcard wide" id="resume" style="border-color:var(--ink)"><span class="ic">▶</span><span><b>Продолжить игру</b><br><small>${esc(sgName)} · вопрос ${sg.i+1} из ${sg.list.length} · ${sg.score} очков</small></span></button></div>
-  <div class="row" style="margin-top:8px"><button class="btn ghost" id="restart">↺ Начать эту тему заново</button><button class="btn ghost" id="drop">Удалить сохранение</button></div>`:""}
-  <h2>Играть</h2>
-  <div class="grid">${TOPICS.map(t=>{const p=topicPct(t);return`<button class="tcard" data-t="${t.k}"><span class="ic">${t.ic}</span><b>${t.name}</b><small>${t.desc} · ${t.list().length} вопр.</small><span class="pct">выучено ${p}%</span><span class="meter"><i style="width:${p}%"></i></span></button>`}).join("")}
-  <button class="tcard wide" data-t="mistakes" ${mis?"":"disabled style='opacity:.5;cursor:default'"}><span class="ic">✗</span><span><b>Работа над ошибками</b><br><small>${mis?mis+" вопр. — ответишь верно, вопрос уйдёт":"ошибок пока нет"}</small></span></button>
+  app.innerHTML=`<div class="bar"><div class="bar-in">
+    ${left?`<button class="iconbtn" id="barLeft" aria-label="${left==="close"?"Закрыть":"Назад"}">${left==="close"?"✕":"←"}</button>`:"<span></span>"}
+    <div class="bar-title">${title}</div><div class="bar-right">${right}</div></div>
+    ${progress!==null?`<div class="thin"><i style="width:${progress}%"></i></div>`:""}</div>
+  <div class="wrap">${body}</div>
+  ${sheet?`<div class="sheet ${sheetClass}" id="sheet"><div class="sheet-in">${sheet}</div></div>`:""}`;
+  fitSheet();
+}
+function fitSheet(){const s=$("#sheet");document.body.style.paddingBottom=s?(s.offsetHeight+16)+"px":""}
+window.addEventListener("resize",fitSheet);
+
+// ===== главная (страница модуля) =====
+let showAll=false;
+function home(){
+  stopTimer();G=null;window.scrollTo(0,0);document.body.style.paddingBottom="";
+  const mis=Object.keys(mistakes()).length,best=store.get("best",0),sg=store.get("game",null);
+  const cards=cardsFor(topic),list=showAll?cards:cards.slice(0,8);
+  app.innerHTML=`<div class="wrap">
+  <div class="home-head"><h1>ТиПСО: аттестация</h1><p>Теория и практика связей с общественностью · экспресс-опрос 12 ноября</p>
+    <div class="stats"><span class="pill">рекорд ${best}</span><span class="pill">выучено ${pct("mix")}%</span><span class="pill">ошибок ${mis}</span></div></div>
+  <div class="seg" role="group" aria-label="Что учить">${TOPICS.map(t=>`<button data-topic="${t.k}" aria-pressed="${topic===t.k}">${t.name}<small>${t.n}</small></button>`).join("")}</div>
+  ${sg&&sg.list&&sg.i<sg.list.length?`<div class="panel resume"><div class="grow"><b>Продолжить: ${esc(sg.calm?"Заучивание":"Тест")}</b><small>${esc(topicName(sg.k))} · вопрос ${sg.i+1} из ${sg.list.length} · ${sg.score} очков</small></div><button class="btn" id="resume">▶</button></div>`:""}
+  <div class="modes">
+    <button class="mode" data-mode="cards"><span class="ic">${ICON.cards}</span><span><b>Карточки</b><small>Переворачивай и листай свайпом</small></span></button>
+    <button class="mode" data-mode="learn"><span class="ic">${ICON.learn}</span><span><b>Заучивание</b><small>Без таймера, с пояснениями</small></span></button>
+    <button class="mode" data-mode="test"><span class="ic">${ICON.test}</span><span><b>Тест</b><small>3 жизни, таймер, комбо</small></span></button>
+    <button class="mode" data-mode="match"><span class="ic">${ICON.match}</span><span><b>Подбор</b><small>Собери пары на время</small></span></button>
   </div>
-  <label class="toggle"><input type="checkbox" id="calm" ${store.get("calm",false)?"checked":""}> Спокойный режим: без таймера и без жизней</label>
-  <h2>Учить</h2>
-  <div class="grid">
-    <button class="tcard wide" id="review"><span class="ic">≡</span><span><b>Разбор ошибок</b><br><small>${mis?"Список вопросов, где ты ошибся, с правильными ответами":"Здесь появятся вопросы, где ты ошибся"}</small></span></button>
-    <button class="tcard" data-f="terms"><span class="ic">⟲</span><b>Карточки: термины</b><small>Переворачивай и запоминай</small></button>
-    <button class="tcard" data-f="people"><span class="ic">⟲</span><b>Карточки: персоналии</b><small>Кто — страна — вклад</small></button>
-  </div>
-  <h2>Начать с нуля</h2>
-  <div id="resetbox" class="row"><button class="btn ghost" id="reset">Сбросить весь прогресс</button><span class="hint">обнулит выученное, ошибки, рекорд и сохранённую игру</span></div>`;
-  $("#reset").onclick=()=>{$("#resetbox").innerHTML=`<b>Точно всё сбросить?</b><button class="btn no" id="ry">Да, сбросить</button><button class="btn ghost" id="rn">Нет</button>`;
-    $("#ry").onclick=()=>{["mastered","mistakes","best","game"].forEach(k=>store.set(k,null));G=null;home()};$("#rn").onclick=home};
-  if($("#restart"))$("#restart").onclick=()=>{const k=sg.k;store.set("game",null);startGame(k==="mistakes"&&!mis?"mix":k)};
-  if($("#drop"))$("#drop").onclick=()=>{store.set("game",null);home()};
-  $("#calm").onchange=e=>store.set("calm",e.target.checked);
-  $("#review").onclick=reviewMistakes;
+  ${mis?`<div class="foot" style="margin:12px 0 0"><button class="chip" id="playMis">Работа над ошибками · ${mis}</button><button class="chip" id="review">Разбор ошибок</button></div>`:""}
+  <h2>Прогресс</h2>
+  <div class="panel prog">${TOPICS.slice(0,3).map(t=>{const p=pct(t.k);return`<div class="prog-row"><span>${t.name}</span><span class="track"><i style="width:${p}%"></i></span><span>${p}%</span></div>`}).join("")}</div>
+  <h2>${topicName(topic)} в модуле (${cards.length})</h2>
+  <div class="terms">${list.map(c=>`<div class="trow"><b>${esc(c.f)}</b><div>${esc(c.b)}</div></div>`).join("")}</div>
+  ${cards.length>8?`<button class="linkbtn" id="more">${showAll?"Свернуть":"Показать все "+cards.length}</button>`:""}
+  <div class="foot"><a class="chip" href="konspekt.html">Конспект</a><a class="chip" href="tipso-shpargalka.pdf" target="_blank" rel="noopener">Шпаргалка PDF</a><span id="resetbox"><button class="chip" id="reset">Сбросить прогресс</button></span></div>
+  </div>`;
+  app.querySelectorAll("[data-topic]").forEach(b=>b.onclick=()=>{topic=b.dataset.topic;store.set("topic",topic);showAll=false;home()});
+  app.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{const m=b.dataset.mode;
+    if(m==="cards")startFlash(topic);else if(m==="match")startMatch(topic);else startGame(topic,m==="learn")});
   if($("#resume"))$("#resume").onclick=resumeGame;
-  app.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{if(b.dataset.t==="mistakes"){if(mis)startGame("mistakes")}else startGame(b.dataset.t)});
-  app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>startFlash(b.dataset.f));
+  if($("#playMis"))$("#playMis").onclick=()=>startGame("mistakes",true);
+  if($("#review"))$("#review").onclick=reviewMistakes;
+  if($("#more"))$("#more").onclick=()=>{showAll=!showAll;home()};
+  $("#reset").onclick=()=>{$("#resetbox").innerHTML=`<button class="chip danger" id="ry">Да, сбросить всё</button> <button class="chip" id="rn">Отмена</button>`;
+    $("#ry").onclick=()=>{["mastered","mistakes","best","game","matchBest"].forEach(k=>store.set(k,null));home()};$("#rn").onclick=home};
 }
 
-// ===== игра =====
+// ===== заучивание и тест =====
 let G=null,timerId=null;
 const TIME=20;
 function pickList(k){
   if(k==="mistakes")return shuffle(Object.values(mistakes()));
-  const l=TOPICS.find(t=>t.k===k).list(),m=mastered();
-  // сначала невыученные, потом остальные
+  const l=qList(k),m=mastered();
   return [...shuffle(l.filter(q=>!m[q.id])),...shuffle(l.filter(q=>m[q.id]))];
 }
-function startGame(k){
-  const calm=store.get("calm",false);
-  const list=pickList(k).slice(0,k==="mistakes"?999:calm?20:999);
-  G={k,calm,list,i:0,lives:3,score:0,combo:0,maxCombo:0,right:0,wrong:[],answered:false,t:TIME};
+function startGame(k,calm){
+  const list=pickList(k).slice(0,calm&&k!=="mistakes"?20:999);
+  if(!list.length)return home();
+  G={k,calm,list,i:0,lives:3,score:0,combo:0,maxCombo:0,right:0,wrong:[],view:0};
   nextQ();
 }
-function mult(){return Math.min(5,1+Math.floor(G.combo/3))}
+const mult=()=>Math.min(5,1+Math.floor(G.combo/3));
 function nextQ(){
   stopTimer();window.scrollTo(0,0);
   if(G.i>=G.list.length||(!G.calm&&G.lives<=0))return endGame();
   const q=G.list[G.i];q.opts=shuffle([q.a,...q.w]);q.chosen=undefined;q.left=TIME;
-  G.answered=false;G.view=G.i;saveGame();renderQ();
+  G.view=G.i;saveGame();renderQ();
 }
 function saveGame(){store.set("game",G)}
 function resumeGame(){
   G=store.get("game",null);if(!G)return home();
-  const q=G.list[G.i];if(!q.opts){q.opts=shuffle([q.a,...q.w]);q.left=TIME}
-  if(q.left==null)q.left=TIME;
-  // таймер после перезахода начинается заново, чтобы было честно
+  const q=G.list[G.i];if(!q.opts)q.opts=shuffle([q.a,...q.w]);
   if(q.chosen===undefined)q.left=TIME;
-  G.view=G.i;window.scrollTo(0,0);renderQ();
+  G.view=G.i;renderQ();
 }
-function reviewMistakes(){
-  document.body.style.paddingBottom="";
-  stopTimer();window.scrollTo(0,0);
-  const l=Object.values(mistakes());
-  app.innerHTML=`<h1>Мои ошибки</h1><p class="sub">${l.length?"Прочитай правильные ответы, потом сыграй в «Работу над ошибками».":"Ошибок нет."}</p>
-  ${l.map(w=>`<div class="miss"><small style="color:var(--muted)">${esc(w.tag||"")}</small><b>${esc(w.q)}</b><span>${esc(w.a)}</span>${w.x?`<p class="hint" style="margin:4px 0 0">${esc(w.x)}</p>`:""}</div>`).join("")}
-  <div class="row actions">${l.length?`<button class="btn" id="play">Играть по ошибкам</button>`:""}<button class="btn ghost" id="menu">Меню</button></div>`;
-  if(l.length)$("#play").onclick=()=>startGame("mistakes");
-  $("#menu").onclick=home;
-}
-// показывает вопрос G.view: текущий (можно отвечать) или прошлый (только просмотр)
 function renderQ(){
-  stopTimer();
   const idx=G.view,q=G.list[idx],past=idx<G.i,done=q.chosen!==undefined,live=!past&&!done;
-  app.innerHTML=`
-  <div class="hud">
-    ${G.calm?`<span class="progress">спокойный режим</span>`:`<span class="lives" aria-label="жизни: ${G.lives}">${[0,1,2].map(i=>`<span class="${i<G.lives?"":"lost"}">♥</span>`).join("")}</span>`}
-    <span class="combo ${G.combo>=3?"":"off"}">комбо ×${mult()}</span>
-    <span class="score">${G.score}</span>
-  </div>
-  ${G.calm?"":`<div class="timer${past?" paused":""}" id="tm"><i id="tb" style="width:${(q.left??0)/TIME*100}%"></i></div>`}
-  <div class="progress" style="margin-top:8px">${past?`<b style="color:var(--ink)">просмотр прошлого</b> · `:""}вопрос ${idx+1}${G.k==="mix"&&!G.calm?"":" из "+G.list.length}</div>
-  <div class="qcard"><div class="tag">${esc(q.tag)}</div><p class="qq${q.q.length>90?" long":""}">${esc(q.q)}</p></div>
-  <div class="answers">${q.opts.map((o,j)=>{let c="";if(done){c=o===q.a?"ok":j===q.chosen?"bad":"dim"}
-    return`<button class="ans ${c}" data-j="${j}" ${done?"disabled":""} style="${done?"animation:none":""}"><span class="k">${j+1}</span>${esc(o)}</button>`}).join("")}</div>
-  <div class="extra-actions"><button class="tool" id="quit">Меню (игра сохранится)</button><button class="tool" id="fin">Завершить игру</button></div>
-  <div class="sheet ${done?(q.opts[q.chosen]===q.a?"good":"badsheet"):""}" id="sheet" style="${done?"":"animation:none"}"><div class="sheet-in">
-    ${done?`<div id="fb">${fbHtml(q)}</div>`:""}
-    <div class="navbar">
-      <button class="btn ghost" id="back" ${idx===0?"disabled":""}>← Назад</button>
-      ${past?`<button class="btn main" id="fwd">${idx+1===G.i?"К текущему →":"Вперёд →"}</button>`:`<button class="btn main" id="next" ${done?"":"disabled"}>${done?"Дальше →":"Выбери ответ"}</button>`}
-    </div>
-  </div></div>`;
-  fitSheet();
+  const ok=done&&q.opts[q.chosen]===q.a;
+  const total=G.list.length;
+  screen({
+    title:`${idx+1} / ${total}`,
+    right:G.calm?"":`${G.score}`,
+    progress:G.i/total*100,
+    body:`
+    ${G.calm?"":`<div class="hud"><span class="lives" aria-label="жизни: ${G.lives}">${[0,1,2].map(i=>`<span class="${i<G.lives?"":"lost"}">♥</span>`).join("")}</span><span class="combo ${G.combo>=3?"":"off"}">комбо ×${mult()}</span></div>
+    <div class="timer" id="tm"><i id="tb" style="width:${(q.left??0)/TIME*100}%"></i></div>`}
+    <div class="qcard"><div class="tag">${past?"просмотр · ":""}${esc(q.tag)}</div><p class="qq${q.q.length>90?" long":""}">${esc(q.q)}</p></div>
+    <p class="choose">${live?"Выбери правильный ответ":past?"Твой прошлый ответ":"&nbsp;"}</p>
+    <div class="answers">${q.opts.map((o,j)=>{let c="";if(done)c=o===q.a?"ok":j===q.chosen?"bad":"dim";
+      return`<button class="ans ${c}" data-j="${j}" ${done?"disabled":""}><span class="k">${j+1}</span>${esc(o)}</button>`}).join("")}</div>
+    <div class="under"><button class="chip" id="fin">Завершить ${G.calm?"заучивание":"тест"}</button></div>`,
+    sheetClass:(done?(ok?"good":"badsheet"):"")+(done&&!past?" anim":""),
+    sheet:`${done?`<div class="fb"><span class="v ${ok?"ok":"bad"}">${ok?"Верно!":q.chosen<0?"Время вышло":"Неверно"}</span>${ok?"":` — правильно: <b>${esc(q.a)}</b>`}${q.x?`<p>${esc(q.x)}</p>`:""}</div>`:""}
+      <div class="navbar"><button class="btn ghost" id="back" ${idx===0?"disabled":""}>← Назад</button>
+      ${past?`<button class="btn" id="fwd">${idx+1===G.i?"К текущему →":"Вперёд →"}</button>`:`<button class="btn" id="next" ${done?"":"disabled"}>${done?"Дальше →":"Выбери ответ"}</button>`}</div>`
+  });
+  $("#barLeft").onclick=()=>{saveGame();home()};
   if(live)app.querySelectorAll(".ans").forEach(b=>b.onclick=()=>answer(+b.dataset.j));
-  $("#quit").onclick=()=>{stopTimer();saveGame();home()};
-  // двойное подтверждение: первое нажатие спрашивает, второе (в течение 4 секунд) завершает
-  $("#fin").onclick=e=>{const b=e.currentTarget;
-    if(b.dataset.armed){endGame();return}
+  $("#fin").onclick=e=>{const b=e.currentTarget;if(b.dataset.armed)return endGame();
     b.dataset.armed="1";b.textContent="Точно завершить? Нажми ещё раз";b.classList.add("danger");
-    setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Завершить игру";b.classList.remove("danger")}},4000)};
-  $("#back").onclick=goBack;
-  if(past)$("#fwd").onclick=goFwd;else if($("#next"))$("#next").onclick=()=>{G.i++;nextQ()};
+    setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Завершить "+(G.calm?"заучивание":"тест");b.classList.remove("danger")}},4000)};
+  $("#back").onclick=()=>{if(G.view>0){G.view--;renderQ()}};
+  if(past)$("#fwd").onclick=()=>{G.view++;renderQ()};else $("#next").onclick=()=>{G.i++;nextQ()};
   if(live&&!G.calm)startTimer(q);
 }
-// отступ снизу под выезжающую панель, чтобы она не закрывала ответы
-function fitSheet(){const s=$("#sheet");document.body.style.paddingBottom=s?(s.offsetHeight+16)+"px":""}
-window.addEventListener("resize",fitSheet);
-function fbHtml(q){
-  const ok=q.opts[q.chosen]===q.a;
-  return`<div class="fb"><span class="v ${ok?"ok":"bad"}">${ok?"Верно!":q.chosen<0?"Время вышло":"Мимо"}</span>${ok?"":` — правильно: <b>${esc(q.a)}</b>`}${q.x?`<p>${esc(q.x)}</p>`:""}</div>`;
-}
-function goBack(){if(G.view>0){G.view--;renderQ()}}
-function goFwd(){if(G.view<G.i){G.view++;renderQ()}}
 function startTimer(q){
   const start=performance.now(),from=q.left;
   const tick=()=>{
@@ -333,89 +364,150 @@ function startTimer(q){
     timerId=requestAnimationFrame(tick);
   };timerId=requestAnimationFrame(tick);
 }
-function stopTimer(){if(timerId)cancelAnimationFrame(timerId);timerId=null}
+function stopTimer(){if(timerId)cancelAnimationFrame(timerId);timerId=null;if(M&&M.tid){clearInterval(M.tid);M.tid=null}}
 function answer(j){
-  const q=G.list[G.i];
-  if(G.view!==G.i||q.chosen!==undefined)return;
-  stopTimer();G.answered=true;q.chosen=j;
-  const ok=j>=0&&q.opts[j]===q.a;
-  const m=mastered(),mi=mistakes();
+  const q=G.list[G.i];if(G.view!==G.i||q.chosen!==undefined)return;
+  stopTimer();q.chosen=j;
+  const ok=j>=0&&q.opts[j]===q.a,m=mastered(),mi=mistakes();
   let gained=0;
   if(ok){G.combo++;G.right++;G.maxCombo=Math.max(G.maxCombo,G.combo);gained=Math.round((100+(G.calm?0:q.left*5))*mult());G.score+=gained;m[q.id]=1;delete mi[q.id]}
   else{G.combo=0;if(!G.calm)G.lives--;delete m[q.id];mi[q.id]={id:q.id,tag:q.tag,q:q.q,a:q.a,w:q.w,x:q.x};G.wrong.push(q)}
-  store.set("mastered",m);store.set("mistakes",mi);saveGame();
-  renderQ();
-  if(ok){const f=document.createElement("div");f.className="float";f.textContent="+"+gained;document.body.appendChild(f);setTimeout(()=>f.remove(),1000)}
-  if(ok&&!q.x){setTimeout(()=>{if(G&&G.view===G.i&&G.list[G.i]===q){G.i++;nextQ()}},900)}
-  else{const n=$("#next");if(n)n.focus({preventScroll:true})}
+  store.set("mastered",m);store.set("mistakes",mi);saveGame();renderQ();
+  if(ok&&!G.calm){const f=document.createElement("div");f.className="float";f.textContent="+"+gained;document.body.appendChild(f);setTimeout(()=>f.remove(),1000)}
+  const n=$("#next");if(n)n.focus({preventScroll:true});
 }
 function endGame(){
-  document.body.style.paddingBottom="";
   stopTimer();store.set("game",null);window.scrollTo(0,0);
-  const total=G.right+G.wrong.length;
-  const best=store.get("best",0);const isBest=G.score>best;if(isBest)store.set("best",G.score);
-  const pct=total?Math.round(G.right/total*100):0;
-  const rank=pct>=90?"Пиаролог":pct>=75?"PR-менеджер":pct>=50?"Стажёр пресс-службы":"Публика (пока)";
-  app.innerHTML=`<div class="end">
-  <p class="progress">${G.calm||G.lives>0?"игра окончена":"жизни закончились"}</p>
-  <div class="big">${G.score}</div>
-  <p><span class="rank">${rank}</span></p>
-  <div class="stats" style="justify-content:center;margin-top:12px"><span class="stat">верно ${G.right}/${total}</span><span class="stat">лучшая серия ${G.maxCombo}</span><span class="stat">${isBest?"новый рекорд!":"рекорд "+Math.max(best,G.score)}</span></div>
-  <div class="row center" style="margin-top:16px"><button class="btn" id="again">Ещё раз</button>${G.wrong.length?`<button class="btn ghost" id="fix">Разобрать ошибки (${G.wrong.length})</button>`:""}<button class="btn ghost" id="menu">Меню</button></div>
-  </div>
-  ${G.wrong.length?`<h2>Запомни</h2>${G.wrong.map(w=>`<div class="miss"><b>${esc(w.q)}</b><span>${esc(w.a)}</span></div>`).join("")}`:""}`;
-  const k=G.k;
-  $("#again").onclick=()=>startGame(k);
-  $("#menu").onclick=home;
-  if(G.wrong.length)$("#fix").onclick=()=>startGame("mistakes");
+  const total=G.right+G.wrong.length,best=store.get("best",0),isBest=!G.calm&&G.score>best;
+  if(isBest)store.set("best",G.score);
+  const p=total?Math.round(G.right/total*100):0;
+  const rank=p>=90?"Пиаролог":p>=75?"PR-менеджер":p>=50?"Стажёр пресс-службы":"Публика (пока)";
+  const k=G.k,calm=G.calm,wrong=G.wrong;
+  screen({title:calm?"Заучивание":"Тест",body:`<div class="end">
+    <p style="color:var(--muted);margin:0">${calm?"верных ответов":(G.lives>0?"тест окончен":"жизни закончились")}</p>
+    <div class="big">${calm?p+"%":G.score}</div>
+    <span class="rank">${rank}</span>
+    <div class="stats" style="justify-content:center"><span class="pill">верно ${G.right} из ${total}</span><span class="pill">лучшая серия ${G.maxCombo}</span>${calm?"":`<span class="pill">${isBest?"новый рекорд!":"рекорд "+Math.max(best,G.score)}</span>`}</div>
+    <div class="endbtns">${wrong.length?`<button class="btn" id="fix">Повторить ошибки (${wrong.length})</button>`:""}<button class="btn ${wrong.length?"ghost":""}" id="again">Ещё раз</button><button class="btn ghost" id="menu">К модулю</button></div></div>
+    ${wrong.length?`<h2>Запомни</h2>${wrong.map(w=>`<div class="miss"><b>${esc(w.q)}</b><span>${esc(w.a)}</span></div>`).join("")}`:""}<div style="height:30px"></div>`});
+  $("#barLeft").onclick=home;$("#menu").onclick=home;
+  $("#again").onclick=()=>startGame(k,calm);
+  if(wrong.length)$("#fix").onclick=()=>startGame("mistakes",true);
+}
+function reviewMistakes(){
+  const l=Object.values(mistakes());
+  screen({left:"back",title:"Разбор ошибок",body:`<p style="color:var(--muted)">Прочитай правильные ответы, потом пройди «Работу над ошибками».</p>
+  ${l.map(w=>`<div class="miss"><small>${esc(w.tag||"")}</small><b>${esc(w.q)}</b><span>${esc(w.a)}</span>${w.x?`<p>${esc(w.x)}</p>`:""}</div>`).join("")||"<p>Ошибок нет.</p>"}`,
+  sheet:l.length?`<button class="btn" id="play">Работа над ошибками · ${l.length}</button>`:""});
+  window.scrollTo(0,0);
+  $("#barLeft").onclick=home;if(l.length)$("#play").onclick=()=>startGame("mistakes",true);
 }
 
-// ===== флэш-карточки =====
+// ===== карточки со свайпом =====
 let F=null;
-function startFlash(d){
-  const items=d==="terms"?TERMS.map(t=>({t:t[0],d:t[1],x:t[2]})):PEOPLE.map(p=>({t:p[0],d:p[2],x:p[1]}));
-  F={d,queue:shuffle(items),total:items.length,known:0,on:false,hist:[]};drawFlash();
+function startFlash(k,only){
+  const items=only||shuffle(cardsFor(k));
+  F={k,all:items,queue:items.slice(),yes:[],no:[],hist:[],on:false};drawFlash();
+}
+function drawFlash(){
+  window.scrollTo(0,0);
+  const total=F.all.length,done=F.yes.length+F.no.length;
+  if(!F.queue.length){
+    screen({title:"Карточки",progress:100,body:`<div class="end"><div class="big">${Math.round(F.yes.length/total*100)}%</div>
+      <p>Знаю: <b style="color:var(--ok)">${F.yes.length}</b> · Ещё учу: <b style="color:var(--bad)">${F.no.length}</b></p>
+      <div class="endbtns">${F.no.length?`<button class="btn" id="again">Повторить «ещё учу» (${F.no.length})</button>`:""}
+      <button class="btn ${F.no.length?"ghost":""}" id="restart">Пройти все заново</button><button class="btn ghost" id="test">Проверить себя тестом</button><button class="btn ghost" id="menu">К модулю</button></div></div>`});
+    $("#barLeft").onclick=home;$("#menu").onclick=home;
+    if(F.no.length)$("#again").onclick=()=>startFlash(F.k,shuffle(F.no));
+    $("#restart").onclick=()=>startFlash(F.k);$("#test").onclick=()=>startGame(F.k==="mix"?"mix":F.k,true);return;
+  }
+  const c=F.queue[0];
+  screen({title:`${done+1} / ${total}`,progress:done/total*100,
+    body:`<div class="counters"><span class="cnt no">${F.no.length}</span><span class="cnt yes">${F.yes.length}</span></div>
+    <div class="stage"><div class="fcard ${F.on?"on":""}" id="fc"><span class="stamp no" id="sno">Ещё учу</span><span class="stamp yes" id="syes">Знаю</span><div class="fflip">
+      <div class="face"><span class="lbl">${esc(c.lf)}</span><div class="t">${esc(c.f)}</div></div>
+      <div class="face back"><span class="lbl">${esc(c.lb)}</span><div class="d">${esc(c.b)}</div>${c.x?`<div class="x">${esc(c.x)}</div>`:""}</div>
+    </div></div></div>
+    <p class="hint">Нажми, чтобы перевернуть · свайп вправо — знаю, влево — ещё учу</p>`,
+    sheet:`<div class="flashbar"><button class="btn ghost" id="fback" ${F.hist.length?"":"disabled"} aria-label="Предыдущая карточка">←</button>
+      <button class="btn red" id="no">✕ Ещё учу</button><button class="btn green" id="yes">✓ Знаю</button></div>`});
+  $("#barLeft").onclick=home;
+  $("#yes").onclick=()=>flashDecide(true);$("#no").onclick=()=>flashDecide(false);
+  $("#fback").onclick=flashBack;
+  attachSwipe($("#fc"));
+}
+function flashDecide(knew,fly){
+  const el=$("#fc");
+  const go=()=>{const x=F.queue.shift();(knew?F.yes:F.no).push(x);F.hist.push({c:x,k:knew});F.on=false;drawFlash()};
+  if(el&&!matchMedia("(prefers-reduced-motion: reduce)").matches){el.classList.remove("dragging");el.style.transform=`translateX(${knew?130:-130}%) rotate(${knew?18:-18}deg)`;el.style.opacity="0";setTimeout(go,220)}else go();
 }
 function flashBack(){
   const h=F.hist.pop();if(!h)return;
-  if(h.k)F.known--;else{const i=F.queue.lastIndexOf(h.c);if(i>=0)F.queue.splice(i,1)}
-  F.queue.unshift(h.c);F.on=true;drawFlash();
+  const arr=h.k?F.yes:F.no;arr.splice(arr.lastIndexOf(h.c),1);
+  F.queue.unshift(h.c);F.on=false;drawFlash();
 }
-function drawFlash(){
-  document.body.style.paddingBottom="";
-  stopTimer();
-  if(!F.queue.length){app.innerHTML=`<div class="end"><div class="big">Всё!</div><p>Все ${F.total} карточек выучены. Теперь проверь себя в игре.</p><div class="row center"><button class="btn" id="play">Играть</button><button class="btn ghost" id="menu">Меню</button></div></div>`;
-    $("#play").onclick=()=>startGame(F.d==="terms"?"terms":"people");$("#menu").onclick=home;return}
-  const c=F.queue[0];
-  app.innerHTML=`<div class="hud"><span class="progress">${F.d==="terms"?"термины":"персоналии"}</span><span class="stat">выучено ${F.known}/${F.total}</span></div>
-  <div class="timer"><i style="width:${F.known/F.total*100}%;background:var(--ok)"></i></div>
-  <div class="flip ${F.on?"on":""}" id="fl"><div class="flip-in" tabindex="0" role="button" aria-label="Перевернуть карточку">
-    <div class="face"><span class="hint">${F.d==="terms"?"что это?":"чем известен?"}</span><div class="t">${esc(c.t)}</div><span class="hint">нажми, чтобы перевернуть</span></div>
-    <div class="face back"><div class="t" style="font-size:16px;color:var(--muted)">${esc(c.t)}</div><div class="d">${esc(c.d)}</div>${c.x?`<div class="x">${esc(c.x)}</div>`:""}</div>
-  </div></div>
-  <p class="hint" style="text-align:center">нажми на карточку, чтобы перевернуть</p>
-  <div class="extra-actions"><button class="tool" id="menu">Меню</button></div>
-  <div class="sheet" id="sheet" style="animation:none"><div class="sheet-in">
-    <div class="flashbar"><button class="btn ghost" id="fback" ${F.hist.length?"":"disabled"} aria-label="Предыдущая карточка">←</button><button class="btn no" id="no">Не знаю</button><button class="btn yes" id="yes">Знаю</button></div>
-  </div></div>`;
-  fitSheet();
-  $("#fl").onclick=()=>{F.on=!F.on;$("#fl").classList.toggle("on",F.on)};
-  $("#yes").onclick=()=>{const x=F.queue.shift();F.hist.push({c:x,k:1});F.known++;F.on=false;drawFlash()};
-  $("#no").onclick=()=>{const x=F.queue.shift();F.queue.splice(Math.min(3,F.queue.length),0,x);F.hist.push({c:x,k:0});F.on=false;drawFlash()};
-  $("#fback").onclick=flashBack;
-  $("#menu").onclick=home;
+function attachSwipe(el){
+  let x0=null,y0=0,dx=0,moved=false;
+  el.addEventListener("pointerdown",e=>{x0=e.clientX;y0=e.clientY;dx=0;moved=false;el.setPointerCapture(e.pointerId)});
+  el.addEventListener("pointermove",e=>{if(x0===null)return;dx=e.clientX-x0;const dy=e.clientY-y0;
+    if(!moved&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)){moved=true;el.classList.add("dragging")}
+    if(moved){el.style.transform=`translateX(${dx}px) rotate(${dx/20}deg)`;
+      $("#syes").style.opacity=Math.max(0,Math.min(1,dx/90));$("#sno").style.opacity=Math.max(0,Math.min(1,-dx/90))}});
+  const end=()=>{if(x0===null)return;x0=null;
+    if(!moved){F.on=!F.on;el.classList.toggle("on",F.on);return}
+    if(Math.abs(dx)>90)flashDecide(dx>0);
+    else{el.classList.remove("dragging");el.style.transform="";$("#syes").style.opacity=0;$("#sno").style.opacity=0}};
+  el.addEventListener("pointerup",end);el.addEventListener("pointercancel",()=>{x0=null;el.classList.remove("dragging");el.style.transform=""});
 }
 
+// ===== подбор =====
+let M=null;
+function startMatch(k){
+  const pairs=shuffle(pairsFor(k)).slice(0,6);
+  const tiles=shuffle(pairs.flatMap((p,i)=>[{p:i,t:p[0],term:true},{p:i,t:p[1],term:false}]));
+  M={k,tiles,sel:null,left:pairs.length,start:performance.now(),tid:null,pen:0};
+  screen({title:"Подбор",right:'<span id="mt">0.0</span>',
+    body:`<p class="hint" style="margin-top:14px">Нажимай пары: термин и его определение. Ошибка — плюс 1 секунда.</p>
+    <div class="mgrid">${tiles.map((t,i)=>`<button class="tile ${t.term?"term":""}" data-i="${i}">${esc(t.t)}</button>`).join("")}</div>`});
+  $("#barLeft").onclick=home;
+  M.tid=setInterval(()=>{const e=$("#mt");if(e)e.textContent=((performance.now()-M.start)/1000+M.pen).toFixed(1)},100);
+  app.querySelectorAll(".tile").forEach(b=>b.onclick=()=>pickTile(b));
+}
+function pickTile(b){
+  const i=+b.dataset.i,t=M.tiles[i];
+  if(M.sel===null){M.sel=i;b.classList.add("sel");return}
+  if(M.sel===i){b.classList.remove("sel");M.sel=null;return}
+  const a=app.querySelector(`.tile[data-i="${M.sel}"]`),ta=M.tiles[M.sel];
+  if(ta.p===t.p&&ta.term!==t.term){a.classList.add("gone");b.classList.add("gone");M.left--;M.sel=null;
+    if(!M.left){clearInterval(M.tid);const time=(performance.now()-M.start)/1000+M.pen;setTimeout(()=>matchEnd(time),300)}}
+  else{M.pen+=1;a.classList.remove("sel");a.classList.add("wrong");b.classList.add("wrong");M.sel=null;
+    setTimeout(()=>{a.classList.remove("wrong");b.classList.remove("wrong")},400)}
+}
+function matchEnd(time){
+  const bests=store.get("matchBest",{}),best=bests[M.k],isBest=!best||time<best;
+  if(isBest){bests[M.k]=time;store.set("matchBest",bests)}
+  const k=M.k;
+  screen({title:"Подбор",body:`<div class="end"><p style="color:var(--muted);margin:0">твоё время</p><div class="big">${time.toFixed(1)} с</div>
+    <span class="rank">${isBest?"Новый рекорд!":"Рекорд: "+best.toFixed(1)+" с"}</span>
+    <div class="endbtns"><button class="btn" id="again">Ещё раз</button><button class="btn ghost" id="menu">К модулю</button></div></div>`});
+  $("#barLeft").onclick=home;$("#menu").onclick=home;$("#again").onclick=()=>startMatch(k);
+}
+
+// ===== клавиатура =====
 document.addEventListener("keydown",e=>{
   if(e.target.tagName==="INPUT")return;
-  if($("#fl")){if(e.code==="Space"){e.preventDefault();$("#fl").click()}if(e.key==="ArrowRight")$("#yes").click();if(e.key==="ArrowLeft")$("#no").click();if(e.key==="Backspace"){e.preventDefault();flashBack()}return}
-  if(!G||!app.querySelector(".qcard"))return;
-  if(e.key==="ArrowLeft"||e.key==="Backspace"){e.preventDefault();goBack();return}
-  if(e.key==="ArrowRight"&&G.view<G.i){goFwd();return}
-  if(G.view===G.i&&/^[1-4]$/.test(e.key)){const b=app.querySelector(`.ans[data-j="${+e.key-1}"]`);if(b&&!b.disabled)b.click()}
-  else if(e.key==="Enter"){const n=$("#next")||$("#fwd");if(n&&!n.hidden){e.preventDefault();n.click()}}
+  if($("#fc")){
+    if(e.code==="Space"){e.preventDefault();F.on=!F.on;$("#fc").classList.toggle("on",F.on)}
+    if(e.key==="ArrowRight")flashDecide(true);
+    if(e.key==="ArrowLeft")flashDecide(false);
+    if(e.key==="Backspace"){e.preventDefault();flashBack()}
+    return;
+  }
+  if(!G||!$(".qcard"))return;
+  if(e.key==="ArrowLeft"||e.key==="Backspace"){e.preventDefault();const b=$("#back");if(b&&!b.disabled)b.click();return}
+  if(/^[1-4]$/.test(e.key)){const b=app.querySelector(`.ans[data-j="${+e.key-1}"]`);if(b&&!b.disabled)b.click();return}
+  if(e.key==="Enter"||e.key==="ArrowRight"){const n=$("#next:not(:disabled)")||$("#fwd");if(n){e.preventDefault();n.click()}}
 });
-$("#home").onclick=e=>{e.preventDefault();G=null;home()};
 home();
 </script>
 </body>
