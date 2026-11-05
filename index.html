@@ -133,9 +133,19 @@ h2{font-family:var(--f-display);font-size:19px;margin:28px 0 10px}
 .cnt.no{color:var(--bad);border:2px solid var(--bad)}
 .cnt.yes{color:var(--ok);border:2px solid var(--ok)}
 .stage{position:relative;height:min(58vh,440px);perspective:1400px;touch-action:pan-y}
-.fcard{position:absolute;inset:0;transition:transform .35s ease;transform-style:preserve-3d;cursor:pointer;will-change:transform}
+.fcard{position:absolute;inset:0;transition:transform .45s cubic-bezier(.25,1.25,.5,1),opacity .3s;transform-style:preserve-3d;cursor:pointer;will-change:transform;z-index:2}
 .fcard.dragging{transition:none}
-.fflip{position:absolute;inset:0;transition:transform .45s;transform-style:preserve-3d}
+.fcard.fly{transition:transform .42s cubic-bezier(.4,0,.7,.2),opacity .42s ease-in;pointer-events:none}
+.fcard.from{transition:transform .45s cubic-bezier(.2,.9,.3,1),opacity .3s}
+/* следующая карточка лежит под текущей и «поднимается», когда верхняя улетает */
+.fcard.next{z-index:1;pointer-events:none;transform:translateY(14px) scale(.94);opacity:.7;transition:transform .42s cubic-bezier(.2,.9,.3,1),opacity .42s}
+.fcard.next.up{transform:none;opacity:1}
+.fcard.next.peek{animation:peek .35s ease-out}
+@keyframes peek{from{opacity:0;transform:translateY(30px) scale(.9)}}
+.fflip{position:absolute;inset:0;transition:transform .55s cubic-bezier(.4,.1,.2,1);transform-style:preserve-3d}
+.cnt{transition:transform .2s}
+.cnt.bump{transform:scale(1.3)}
+.thin i{transition:width .4s ease}
 .fcard.on .fflip{transform:rotateY(180deg)}
 .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--paper);border-radius:22px;box-shadow:var(--shadow-lg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 22px;gap:12px;overflow:auto}
@@ -417,10 +427,13 @@ function drawFlash(){
     if(F.no.length)$("#again").onclick=()=>startFlash(F.k,shuffle(F.no));
     $("#restart").onclick=()=>startFlash(F.k);$("#test").onclick=()=>startGame(F.k==="mix"?"mix":F.k,true);return;
   }
-  const c=F.queue[0];
+  const c=F.queue[0],n=F.queue[1];
+  const from=F.from;F.from=null;
   screen({title:`${done+1} / ${total}`,progress:done/total*100,
-    body:`<div class="counters"><span class="cnt no">${F.no.length}</span><span class="cnt yes">${F.yes.length}</span></div>
-    <div class="stage"><div class="fcard ${F.on?"on":""}" id="fc"><span class="stamp no" id="sno">Ещё учу</span><span class="stamp yes" id="syes">Знаю</span><div class="fflip">
+    body:`<div class="counters"><span class="cnt no" id="cno">${F.no.length}</span><span class="cnt yes" id="cyes">${F.yes.length}</span></div>
+    <div class="stage">
+    ${n?`<div class="fcard next${from===null&&F.started?" peek":""}" id="fcn" aria-hidden="true"><div class="fflip"><div class="face"><span class="lbl">${esc(n.lf)}</span><div class="t">${esc(n.f)}</div></div></div></div>`:""}
+    <div class="fcard ${F.on?"on":""}" id="fc"><span class="stamp no" id="sno">Ещё учу</span><span class="stamp yes" id="syes">Знаю</span><div class="fflip">
       <div class="face"><span class="lbl">${esc(c.lf)}</span><div class="t">${esc(c.f)}</div></div>
       <div class="face back"><span class="lbl">${esc(c.lb)}</span><div class="d">${esc(c.b)}</div>${c.x?`<div class="x">${esc(c.x)}</div>`:""}</div>
     </div></div></div>
@@ -430,30 +443,54 @@ function drawFlash(){
   $("#barLeft").onclick=home;
   $("#yes").onclick=()=>flashDecide(true);$("#no").onclick=()=>flashDecide(false);
   $("#fback").onclick=flashBack;
-  attachSwipe($("#fc"));
-}
-function flashDecide(knew,fly){
   const el=$("#fc");
+  // карточка, возвращённая кнопкой «Назад», прилетает обратно с той стороны, куда ушла
+  if(from&&!reduced()){el.style.transform=`translateX(${from==="right"?120:-120}%) rotate(${from==="right"?14:-14}deg)`;el.style.opacity="0";
+    el.getBoundingClientRect();el.classList.add("from");el.style.transform="";el.style.opacity="";
+    setTimeout(()=>el.classList.remove("from"),460)}
+  F.started=true;F.busy=false;
+  attachSwipe(el);
+}
+const reduced=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+function flashDecide(knew){
+  if(F.busy)return;F.busy=true;
+  const el=$("#fc"),nx=$("#fcn");
   const go=()=>{const x=F.queue.shift();(knew?F.yes:F.no).push(x);F.hist.push({c:x,k:knew});F.on=false;drawFlash()};
-  if(el&&!matchMedia("(prefers-reduced-motion: reduce)").matches){el.classList.remove("dragging");el.style.transform=`translateX(${knew?130:-130}%) rotate(${knew?18:-18}deg)`;el.style.opacity="0";setTimeout(go,220)}else go();
+  // счётчик и полоска прогресса меняются сразу, плавно
+  const c=$(knew?"#cyes":"#cno");if(c){c.textContent=+c.textContent+1;c.classList.add("bump");setTimeout(()=>c.classList.remove("bump"),200)}
+  const bar=$(".thin i");if(bar)bar.style.width=((F.yes.length+F.no.length+1)/F.all.length*100)+"%";
+  if(!el||reduced())return go();
+  const cur=new DOMMatrix(getComputedStyle(el).transform).m41||0;
+  el.classList.remove("dragging");el.classList.add("fly");
+  el.style.transform=`translateX(${(knew?1:-1)*Math.max(window.innerWidth*1.1,Math.abs(cur)+400)}px) rotate(${knew?24:-24}deg)`;
+  el.style.opacity="0";
+  $(knew?"#syes":"#sno").style.opacity=1;
+  if(nx)nx.classList.add("up");
+  setTimeout(go,400);
 }
 function flashBack(){
+  if(F.busy)return;
   const h=F.hist.pop();if(!h)return;
   const arr=h.k?F.yes:F.no;arr.splice(arr.lastIndexOf(h.c),1);
-  F.queue.unshift(h.c);F.on=false;drawFlash();
+  F.queue.unshift(h.c);F.on=false;F.from=h.k?"right":"left";drawFlash();
 }
 function attachSwipe(el){
   let x0=null,y0=0,dx=0,moved=false;
-  el.addEventListener("pointerdown",e=>{x0=e.clientX;y0=e.clientY;dx=0;moved=false;el.setPointerCapture(e.pointerId)});
+  const nx=$("#fcn");
+  el.addEventListener("pointerdown",e=>{if(F.busy)return;x0=e.clientX;y0=e.clientY;dx=0;moved=false;el.setPointerCapture(e.pointerId)});
   el.addEventListener("pointermove",e=>{if(x0===null)return;dx=e.clientX-x0;const dy=e.clientY-y0;
-    if(!moved&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)){moved=true;el.classList.add("dragging")}
-    if(moved){el.style.transform=`translateX(${dx}px) rotate(${dx/20}deg)`;
+    if(!moved&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)){moved=true;el.classList.add("dragging");if(nx)nx.style.transition="none"}
+    if(moved){el.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;
+      const p=Math.min(1,Math.abs(dx)/120);
+      if(nx){nx.style.transform=`translateY(${14*(1-p)}px) scale(${.94+.06*p})`;nx.style.opacity=.7+.3*p}
       $("#syes").style.opacity=Math.max(0,Math.min(1,dx/90));$("#sno").style.opacity=Math.max(0,Math.min(1,-dx/90))}});
+  const reset=()=>{el.classList.remove("dragging");el.style.transform="";$("#syes").style.opacity=0;$("#sno").style.opacity=0;
+    if(nx){nx.style.transition="";nx.style.transform="";nx.style.opacity=""}};
   const end=()=>{if(x0===null)return;x0=null;
     if(!moved){F.on=!F.on;el.classList.toggle("on",F.on);return}
-    if(Math.abs(dx)>90)flashDecide(dx>0);
-    else{el.classList.remove("dragging");el.style.transform="";$("#syes").style.opacity=0;$("#sno").style.opacity=0}};
-  el.addEventListener("pointerup",end);el.addEventListener("pointercancel",()=>{x0=null;el.classList.remove("dragging");el.style.transform=""});
+    if(nx){nx.style.transition="";nx.style.transform="";nx.style.opacity=""}
+    if(Math.abs(dx)>90)flashDecide(dx>0);else reset()};
+  el.addEventListener("pointerup",end);el.addEventListener("pointercancel",()=>{x0=null;reset()});
 }
 
 // ===== подбор =====
