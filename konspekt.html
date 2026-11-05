@@ -16,12 +16,6 @@
   --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#10121c; --paper:#181b29; --fg:#e8eaf6; --muted:#9aa0c3; --line:#2b2f45;
-  --ink:#8ea2ff; --ink-soft:#232a52; --mark:#6b5a00; --ok:#4fd39a; --ok-soft:#133a2a; --bad:#ff7d93; --bad-soft:#41182233; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#10121c; --paper:#181b29; --fg:#e8eaf6; --muted:#9aa0c3; --line:#2b2f45;
-  --ink:#8ea2ff; --ink-soft:#232a52; --mark:#6b5a00; --ok:#4fd39a; --ok-soft:#133a2a; --bad:#ff7d93; --bad-soft:#41182233; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
