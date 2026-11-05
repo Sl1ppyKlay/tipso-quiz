@@ -111,7 +111,20 @@ h2{font-family:var(--f-display);font-size:18px;margin:26px 0 10px}
 .btn.no{background:var(--bad);box-shadow:0 4px 0 color-mix(in srgb,var(--bad) 60%,#000)}
 .btn.yes{background:var(--ok);box-shadow:0 4px 0 color-mix(in srgb,var(--ok) 60%,#000)}
 .center{justify-content:center}
-@media (max-width:520px){.answers{grid-template-columns:1fr}.ans{min-height:0}.grid{gap:10px}.tcard{min-height:130px;padding:14px}}
+button,a{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.actions{position:sticky;bottom:0;z-index:4;background:var(--bg);padding:10px 0 max(10px,env(safe-area-inset-bottom));margin-top:14px;justify-content:space-between}
+@media (max-width:520px){
+  body{padding-bottom:16px}
+  .answers{grid-template-columns:1fr;gap:8px}
+  .ans{min-height:56px;padding:13px 12px 13px 36px;font-size:15.5px}
+  .qcard{padding:18px 14px;margin:10px 0}
+  .grid{gap:10px}.tcard{min-height:130px;padding:14px}
+  .btn{padding:14px 16px}
+  .actions .btn{flex:1 1 auto}
+  .actions>.row{flex:1 1 auto}
+  .flip-in{min-height:300px}
+  .float{top:30%}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -129,7 +142,7 @@ const $=s=>document.querySelector(s);
 const app=$("#app");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const store={get(k,d){try{const v=localStorage.getItem("tipsoq_"+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("tipsoq_"+k,JSON.stringify(v))}catch(e){}}};
+const store={get(k,d){try{const v=localStorage.getItem("tipsoq_"+k);const p=v?JSON.parse(v):null;return p??d}catch(e){return d}},set(k,v){try{localStorage.setItem("tipsoq_"+k,JSON.stringify(v))}catch(e){}}};
 
 // ===== вопросы =====
 function allQuestions(){
@@ -163,10 +176,14 @@ function home(){
   stopTimer();
   const best=store.get("best",0),mis=Object.keys(mistakes()).length;
   const all=TOPICS[3];
+  const sg=store.get("game",null);
+  const sgName=sg?(sg.k==="mistakes"?"Работа над ошибками":(TOPICS.find(t=>t.k===sg.k)||{}).name):"";
   app.innerHTML=`
   <h1>Выучи ТиПСО, играя</h1>
-  <p class="sub">Выбирай карточку с ответом. 3 жизни, таймер, комбо за серию верных ответов.</p>
+  <p class="sub">Выбирай карточку с ответом. 3 жизни, таймер, комбо за серию верных ответов. Прогресс сохраняется на этом устройстве.</p>
   <div class="stats"><span class="stat">рекорд ${best}</span><span class="stat">выучено ${topicPct(all)}%</span><span class="stat">ошибок ${mis}</span></div>
+  ${sg&&sg.list&&sg.i<sg.list.length?`<div class="grid" style="margin-top:14px"><button class="tcard wide" id="resume" style="border-color:var(--ink)"><span class="ic">▶</span><span><b>Продолжить игру</b><br><small>${esc(sgName)} · вопрос ${sg.i+1} из ${sg.list.length} · ${sg.score} очков</small></span></button></div>
+  <div class="row" style="margin-top:8px"><button class="btn ghost" id="restart">↺ Начать эту тему заново</button><button class="btn ghost" id="drop">Удалить сохранение</button></div>`:""}
   <h2>Играть</h2>
   <div class="grid">${TOPICS.map(t=>{const p=topicPct(t);return`<button class="tcard" data-t="${t.k}"><span class="ic">${t.ic}</span><b>${t.name}</b><small>${t.desc} · ${t.list().length} вопр.</small><span class="pct">выучено ${p}%</span><span class="meter"><i style="width:${p}%"></i></span></button>`}).join("")}
   <button class="tcard wide" data-t="mistakes" ${mis?"":"disabled style='opacity:.5;cursor:default'"}><span class="ic">✗</span><span><b>Работа над ошибками</b><br><small>${mis?mis+" вопр. — ответишь верно, вопрос уйдёт":"ошибок пока нет"}</small></span></button>
@@ -174,10 +191,19 @@ function home(){
   <label class="toggle"><input type="checkbox" id="calm" ${store.get("calm",false)?"checked":""}> Спокойный режим: без таймера и без жизней</label>
   <h2>Учить</h2>
   <div class="grid">
+    <button class="tcard wide" id="review"><span class="ic">≡</span><span><b>Разбор ошибок</b><br><small>${mis?"Список вопросов, где ты ошибся, с правильными ответами":"Здесь появятся вопросы, где ты ошибся"}</small></span></button>
     <button class="tcard" data-f="terms"><span class="ic">⟲</span><b>Карточки: термины</b><small>Переворачивай и запоминай</small></button>
     <button class="tcard" data-f="people"><span class="ic">⟲</span><b>Карточки: персоналии</b><small>Кто — страна — вклад</small></button>
-  </div>`;
+  </div>
+  <h2>Начать с нуля</h2>
+  <div id="resetbox" class="row"><button class="btn ghost" id="reset">Сбросить весь прогресс</button><span class="hint">обнулит выученное, ошибки, рекорд и сохранённую игру</span></div>`;
+  $("#reset").onclick=()=>{$("#resetbox").innerHTML=`<b>Точно всё сбросить?</b><button class="btn no" id="ry">Да, сбросить</button><button class="btn ghost" id="rn">Нет</button>`;
+    $("#ry").onclick=()=>{["mastered","mistakes","best","game"].forEach(k=>store.set(k,null));G=null;home()};$("#rn").onclick=home};
+  if($("#restart"))$("#restart").onclick=()=>{const k=sg.k;store.set("game",null);startGame(k==="mistakes"&&!mis?"mix":k)};
+  if($("#drop"))$("#drop").onclick=()=>{store.set("game",null);home()};
   $("#calm").onchange=e=>store.set("calm",e.target.checked);
+  $("#review").onclick=reviewMistakes;
+  if($("#resume"))$("#resume").onclick=resumeGame;
   app.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{if(b.dataset.t==="mistakes"){if(mis)startGame("mistakes")}else startGame(b.dataset.t)});
   app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>startFlash(b.dataset.f));
 }
@@ -199,30 +225,66 @@ function startGame(k){
 }
 function mult(){return Math.min(5,1+Math.floor(G.combo/3))}
 function nextQ(){
-  stopTimer();
+  stopTimer();window.scrollTo(0,0);
   if(G.i>=G.list.length||(!G.calm&&G.lives<=0))return endGame();
-  const q=G.list[G.i];q.opts=shuffle([q.a,...q.w]);G.answered=false;G.t=TIME;
+  const q=G.list[G.i];q.opts=shuffle([q.a,...q.w]);q.chosen=undefined;q.left=TIME;
+  G.answered=false;G.view=G.i;saveGame();renderQ();
+}
+function saveGame(){store.set("game",G)}
+function resumeGame(){
+  G=store.get("game",null);if(!G)return home();
+  const q=G.list[G.i];if(!q.opts){q.opts=shuffle([q.a,...q.w]);q.left=TIME}
+  if(q.left==null)q.left=TIME;
+  // таймер после перезахода начинается заново, чтобы было честно
+  if(q.chosen===undefined)q.left=TIME;
+  G.view=G.i;window.scrollTo(0,0);renderQ();
+}
+function reviewMistakes(){
+  stopTimer();window.scrollTo(0,0);
+  const l=Object.values(mistakes());
+  app.innerHTML=`<h1>Мои ошибки</h1><p class="sub">${l.length?"Прочитай правильные ответы, потом сыграй в «Работу над ошибками».":"Ошибок нет."}</p>
+  ${l.map(w=>`<div class="miss"><small style="color:var(--muted)">${esc(w.tag||"")}</small><b>${esc(w.q)}</b><span>${esc(w.a)}</span>${w.x?`<p class="hint" style="margin:4px 0 0">${esc(w.x)}</p>`:""}</div>`).join("")}
+  <div class="row actions">${l.length?`<button class="btn" id="play">Играть по ошибкам</button>`:""}<button class="btn ghost" id="menu">Меню</button></div>`;
+  if(l.length)$("#play").onclick=()=>startGame("mistakes");
+  $("#menu").onclick=home;
+}
+// показывает вопрос G.view: текущий (можно отвечать) или прошлый (только просмотр)
+function renderQ(){
+  stopTimer();
+  const idx=G.view,q=G.list[idx],past=idx<G.i,done=q.chosen!==undefined,live=!past&&!done;
   app.innerHTML=`
   <div class="hud">
     ${G.calm?`<span class="progress">спокойный режим</span>`:`<span class="lives" aria-label="жизни: ${G.lives}">${[0,1,2].map(i=>`<span class="${i<G.lives?"":"lost"}">♥</span>`).join("")}</span>`}
     <span class="combo ${G.combo>=3?"":"off"}">комбо ×${mult()}</span>
     <span class="score">${G.score}</span>
   </div>
-  ${G.calm?"":`<div class="timer" id="tm"><i id="tb"></i></div>`}
-  <div class="progress">вопрос ${G.i+1}${G.k==="mix"&&!G.calm?"":" из "+G.list.length} · серия ${G.combo}</div>
+  ${G.calm?"":`<div class="timer${past?" paused":""}" id="tm"><i id="tb" style="width:${(q.left??0)/TIME*100}%"></i></div>`}
+  <div class="progress">${past?`<b style="color:var(--ink)">просмотр прошлого вопроса</b> · `:""}вопрос ${idx+1}${G.k==="mix"&&!G.calm?"":" из "+G.list.length} · серия ${G.combo}</div>
   <div class="qcard"><div class="tag">${esc(q.tag)}</div><p class="qq">${esc(q.q)}</p></div>
-  <div class="answers">${q.opts.map((o,j)=>`<button class="ans" data-j="${j}"><span class="k">${j+1}</span>${esc(o)}</button>`).join("")}</div>
-  <div id="fb"></div>
-  <div class="row" style="margin-top:14px;justify-content:space-between"><button class="btn ghost" id="quit">Выйти</button><button class="btn" id="next" hidden>Дальше →</button></div>`;
-  app.querySelectorAll(".ans").forEach(b=>b.onclick=()=>answer(+b.dataset.j));
-  $("#quit").onclick=endGame;
-  $("#next").onclick=()=>{G.i++;nextQ()};
-  if(!G.calm)startTimer();
+  <div class="answers">${q.opts.map((o,j)=>{let c="";if(done){c=o===q.a?"ok":j===q.chosen?"bad":"dim"}
+    return`<button class="ans ${c}" data-j="${j}" ${done?"disabled":""} style="${done?"animation:none":""}"><span class="k">${j+1}</span>${esc(o)}</button>`}).join("")}</div>
+  <div id="fb">${done?fbHtml(q):""}</div>
+  <div class="row actions">
+    <div class="row"><button class="btn ghost" id="back" ${idx===0?"disabled style='opacity:.4'":""}>← Назад</button><button class="btn ghost" id="quit" title="Игра сохранится, продолжишь из меню">Меню</button><button class="btn ghost" id="fin">Завершить</button></div>
+    ${past?`<button class="btn" id="fwd">${idx+1===G.i?"К текущему →":"Вперёд →"}</button>`:`<button class="btn" id="next" ${done?"":"hidden"}>Дальше →</button>`}
+  </div>`;
+  if(live)app.querySelectorAll(".ans").forEach(b=>b.onclick=()=>answer(+b.dataset.j));
+  $("#quit").onclick=()=>{stopTimer();saveGame();home()};
+  $("#fin").onclick=endGame;
+  $("#back").onclick=goBack;
+  if(past)$("#fwd").onclick=goFwd;else $("#next").onclick=()=>{G.i++;nextQ()};
+  if(live&&!G.calm)startTimer(q);
 }
-function startTimer(){
-  const start=performance.now();
+function fbHtml(q){
+  const ok=q.opts[q.chosen]===q.a;
+  return`<div class="fb"><span class="v ${ok?"ok":"bad"}">${ok?"Верно!":q.chosen<0?"Время вышло":"Мимо"}</span>${ok?"":` — правильно: <b>${esc(q.a)}</b>`}${q.x?`<p>${esc(q.x)}</p>`:""}</div>`;
+}
+function goBack(){if(G.view>0){G.view--;renderQ()}}
+function goFwd(){if(G.view<G.i){G.view++;renderQ()}}
+function startTimer(q){
+  const start=performance.now(),from=q.left;
   const tick=()=>{
-    const left=Math.max(0,TIME-(performance.now()-start)/1000);G.t=left;
+    const left=Math.max(0,from-(performance.now()-start)/1000);q.left=left;
     const b=$("#tb");if(b){b.style.width=(left/TIME*100)+"%";$("#tm").classList.toggle("low",left<6)}
     if(left<=0){answer(-1);return}
     timerId=requestAnimationFrame(tick);
@@ -230,24 +292,22 @@ function startTimer(){
 }
 function stopTimer(){if(timerId)cancelAnimationFrame(timerId);timerId=null}
 function answer(j){
-  if(G.answered)return;G.answered=true;stopTimer();
-  const q=G.list[G.i],ok=j>=0&&q.opts[j]===q.a;
-  app.querySelectorAll(".ans").forEach((b,n)=>{b.disabled=true;if(q.opts[n]===q.a)b.classList.add("ok");else if(n===j)b.classList.add("bad");else b.classList.add("dim")});
+  const q=G.list[G.i];
+  if(G.view!==G.i||q.chosen!==undefined)return;
+  stopTimer();G.answered=true;q.chosen=j;
+  const ok=j>=0&&q.opts[j]===q.a;
   const m=mastered(),mi=mistakes();
   let gained=0;
-  if(ok){G.combo++;G.right++;G.maxCombo=Math.max(G.maxCombo,G.combo);gained=Math.round((100+(G.calm?0:G.t*5))*mult());G.score+=gained;m[q.id]=1;delete mi[q.id];
-    const f=document.createElement("div");f.className="float";f.textContent="+"+gained;document.body.appendChild(f);setTimeout(()=>f.remove(),1000)}
+  if(ok){G.combo++;G.right++;G.maxCombo=Math.max(G.maxCombo,G.combo);gained=Math.round((100+(G.calm?0:q.left*5))*mult());G.score+=gained;m[q.id]=1;delete mi[q.id]}
   else{G.combo=0;if(!G.calm)G.lives--;delete m[q.id];mi[q.id]={id:q.id,tag:q.tag,q:q.q,a:q.a,w:q.w,x:q.x};G.wrong.push(q)}
-  store.set("mastered",m);store.set("mistakes",mi);
-  $("#fb").innerHTML=`<div class="fb"><span class="v ${ok?"ok":"bad"}">${ok?"Верно!":j<0?"Время вышло":"Мимо"}</span>${ok?"":` — правильно: <b>${esc(q.a)}</b>`}${q.x?`<p>${esc(q.x)}</p>`:""}</div>`;
-  const hud=app.querySelector(".hud");
-  if(hud){hud.querySelector(".score").textContent=G.score;const c=hud.querySelector(".combo");c.textContent="комбо ×"+mult();c.classList.toggle("off",G.combo<3);
-    const l=hud.querySelector(".lives");if(l)l.innerHTML=[0,1,2].map(i=>`<span class="${i<G.lives?"":"lost"}">♥</span>`).join("")}
-  if(ok&&!q.x){setTimeout(()=>{if(G&&G.answered&&G.list[G.i]===q){G.i++;nextQ()}},900)}
-  else{const n=$("#next");n.hidden=false;n.focus()}
+  store.set("mastered",m);store.set("mistakes",mi);saveGame();
+  renderQ();
+  if(ok){const f=document.createElement("div");f.className="float";f.textContent="+"+gained;document.body.appendChild(f);setTimeout(()=>f.remove(),1000)}
+  if(ok&&!q.x){setTimeout(()=>{if(G&&G.view===G.i&&G.list[G.i]===q){G.i++;nextQ()}},900)}
+  else{const fb=$("#fb .fb");if(fb)fb.scrollIntoView({block:"nearest",behavior:"smooth"});const n=$("#next");if(n)n.focus({preventScroll:true})}
 }
 function endGame(){
-  stopTimer();
+  stopTimer();store.set("game",null);window.scrollTo(0,0);
   const total=G.right+G.wrong.length;
   const best=store.get("best",0);const isBest=G.score>best;if(isBest)store.set("best",G.score);
   const pct=total?Math.round(G.right/total*100):0;
@@ -270,7 +330,12 @@ function endGame(){
 let F=null;
 function startFlash(d){
   const items=d==="terms"?TERMS.map(t=>({t:t[0],d:t[1],x:t[2]})):PEOPLE.map(p=>({t:p[0],d:p[2],x:p[1]}));
-  F={d,queue:shuffle(items),total:items.length,known:0,on:false};drawFlash();
+  F={d,queue:shuffle(items),total:items.length,known:0,on:false,hist:[]};drawFlash();
+}
+function flashBack(){
+  const h=F.hist.pop();if(!h)return;
+  if(h.k)F.known--;else{const i=F.queue.lastIndexOf(h.c);if(i>=0)F.queue.splice(i,1)}
+  F.queue.unshift(h.c);F.on=true;drawFlash();
 }
 function drawFlash(){
   stopTimer();
@@ -284,19 +349,23 @@ function drawFlash(){
     <div class="face back"><div class="t" style="font-size:16px;color:var(--muted)">${esc(c.t)}</div><div class="d">${esc(c.d)}</div>${c.x?`<div class="x">${esc(c.x)}</div>`:""}</div>
   </div></div>
   <div class="row center"><button class="btn no" id="no">Не знаю</button><button class="btn yes" id="yes">Знаю</button></div>
-  <p class="hint" style="text-align:center">пробел — перевернуть · ← не знаю · → знаю</p>
-  <div class="row center"><button class="btn ghost" id="menu">Меню</button></div>`;
+  <p class="hint" style="text-align:center">пробел — перевернуть · ← не знаю · → знаю · Backspace — назад</p>
+  <div class="row center"><button class="btn ghost" id="fback" ${F.hist.length?"":"disabled style='opacity:.4'"}>← Назад</button><button class="btn ghost" id="menu">Меню</button></div>`;
   $("#fl").onclick=()=>{F.on=!F.on;$("#fl").classList.toggle("on",F.on)};
-  $("#yes").onclick=()=>{F.queue.shift();F.known++;F.on=false;drawFlash()};
-  $("#no").onclick=()=>{const x=F.queue.shift();F.queue.splice(Math.min(3,F.queue.length),0,x);F.on=false;drawFlash()};
+  $("#yes").onclick=()=>{const x=F.queue.shift();F.hist.push({c:x,k:1});F.known++;F.on=false;drawFlash()};
+  $("#no").onclick=()=>{const x=F.queue.shift();F.queue.splice(Math.min(3,F.queue.length),0,x);F.hist.push({c:x,k:0});F.on=false;drawFlash()};
+  $("#fback").onclick=flashBack;
   $("#menu").onclick=home;
 }
 
 document.addEventListener("keydown",e=>{
   if(e.target.tagName==="INPUT")return;
-  if($("#fl")){if(e.code==="Space"){e.preventDefault();$("#fl").click()}if(e.key==="ArrowRight")$("#yes").click();if(e.key==="ArrowLeft")$("#no").click();return}
-  if(G&&!G.answered&&/^[1-4]$/.test(e.key)){const b=app.querySelector(`.ans[data-j="${+e.key-1}"]`);if(b)b.click()}
-  else if(G&&G.answered&&e.key==="Enter"){const n=$("#next");if(n&&!n.hidden){e.preventDefault();n.click()}}
+  if($("#fl")){if(e.code==="Space"){e.preventDefault();$("#fl").click()}if(e.key==="ArrowRight")$("#yes").click();if(e.key==="ArrowLeft")$("#no").click();if(e.key==="Backspace"){e.preventDefault();flashBack()}return}
+  if(!G||!app.querySelector(".qcard"))return;
+  if(e.key==="ArrowLeft"||e.key==="Backspace"){e.preventDefault();goBack();return}
+  if(e.key==="ArrowRight"&&G.view<G.i){goFwd();return}
+  if(G.view===G.i&&/^[1-4]$/.test(e.key)){const b=app.querySelector(`.ans[data-j="${+e.key-1}"]`);if(b&&!b.disabled)b.click()}
+  else if(e.key==="Enter"){const n=$("#next")||$("#fwd");if(n&&!n.hidden){e.preventDefault();n.click()}}
 });
 $("#home").onclick=e=>{e.preventDefault();G=null;home()};
 home();
