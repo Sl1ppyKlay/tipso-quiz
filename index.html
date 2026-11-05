@@ -270,7 +270,11 @@ function renderQ(){
   </div>`;
   if(live)app.querySelectorAll(".ans").forEach(b=>b.onclick=()=>answer(+b.dataset.j));
   $("#quit").onclick=()=>{stopTimer();saveGame();home()};
-  $("#fin").onclick=endGame;
+  // двойное подтверждение: первое нажатие спрашивает, второе (в течение 4 секунд) завершает
+  $("#fin").onclick=e=>{const b=e.currentTarget;
+    if(b.dataset.armed){endGame();return}
+    b.dataset.armed="1";b.textContent="Точно завершить?";b.classList.remove("ghost");b.classList.add("no");
+    setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Завершить";b.classList.add("ghost");b.classList.remove("no")}},4000)};
   $("#back").onclick=goBack;
   if(past)$("#fwd").onclick=goFwd;else $("#next").onclick=()=>{G.i++;nextQ()};
   if(live&&!G.calm)startTimer(q);
