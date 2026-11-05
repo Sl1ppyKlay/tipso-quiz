@@ -51,7 +51,7 @@ mark{background:var(--mark);color:inherit;padding:0 3px;border-radius:3px}
 .term .n{font-family:var(--f-mono);color:var(--muted);font-size:13px;padding-top:2px}
 .term .t{font-weight:600}
 .term .s{grid-column:2;color:var(--fg)}
-.term .s b{background:var(--mark);font-weight:500;padding:0 3px;border-radius:3px}
+.term .s b{font-weight:500}
 .term .more{grid-column:2;font-size:13px;color:var(--ink)}
 .term[open] .more{display:none}
 .term .full{margin:8px 0 0 42px;color:var(--muted);font-size:15px}
@@ -61,6 +61,16 @@ th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px soli
 th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
 td:first-child{font-weight:600;white-space:nowrap}
 h2[id]{scroll-margin-top:130px}
+@media (max-width:520px){
+  header{padding-block:8px 8px}
+  .brand span{display:none}
+  .brand h1{font-size:17px}
+  nav{margin-top:6px}
+  nav a{padding:8px 12px}
+  h2[id]{scroll-margin-top:100px}
+  .term summary{grid-template-columns:28px 1fr}
+  .term{padding:14px 0}
+}
 .person{border-top:1px solid var(--line);padding:9px 0}
 .person .country{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:4px}
 .person div{color:var(--fg);margin-top:2px}
@@ -140,7 +150,7 @@ ${t[2]?`<p class="full">${esc(t[2])}</p>`:""}</details>`).join("");
 const PGROUPS=[["Общественное мнение, публика, массы",0,11],["Теория и история PR — зарубежные",11,27],["Россия — Петербургская школа и наука о PR",27,38],["Дальний Восток (Хабаровск)",38,PEOPLE.length]];
 const ppl=PGROUPS.map(([g,a,b])=>`<h3>${g}</h3>`+PEOPLE.slice(a,b).map(p=>`<div class="person"><b>${esc(p[0])}</b> <span class="country">${esc(p[1])}</span><div>${esc(p[2])}</div></div>`).join("")).join("");
 $("#v-learn").innerHTML=`
-<p class="lead">Жёлтым выделено короткое определение: его и учи. Нажми на термин, чтобы раскрыть подробности.</p>
+<p class="lead">Под каждым термином — определение: его и учи. Нажми на термин, чтобы раскрыть подробности.</p>
 <input class="search" id="q" type="search" placeholder="Поиск по терминам…" aria-label="Поиск по терминам">
 <div class="toc"><a href="#s1">Термины</a><a href="#s2">Экспресс-вопросы</a><a href="#s3">Спираль молчания</a><a href="#s4">Семинары</a><a href="#s5">Закон о рекламе</a><a href="#s6">Персоналии</a></div>
 

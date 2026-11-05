@@ -112,6 +112,36 @@ h2{font-family:var(--f-display);font-size:18px;margin:26px 0 10px}
 .btn.yes{background:var(--ok);box-shadow:0 4px 0 color-mix(in srgb,var(--ok) 60%,#000)}
 .center{justify-content:center}
 button,a{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+/* верхняя панель игры: второстепенные действия */
+.toolbar{display:flex;align-items:center;gap:6px;margin:10px 0 0}
+.toolbar .progress{flex:1;text-align:center;font-variant-numeric:tabular-nums}
+.tool{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 11px;font-size:14px;font-weight:600;min-height:40px}
+.tool:disabled{opacity:.35;cursor:default}
+.tool.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+/* нижняя выезжающая панель: результат + главная кнопка, всегда под пальцем */
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--paper);border-top:2px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  box-shadow:0 -8px 24px rgba(0,0,0,.18);animation:slideup .22s ease-out}
+.sheet.good{background:var(--ok-soft);border-top-color:var(--ok)}
+.sheet.badsheet{background:var(--bad-soft);border-top-color:var(--bad)}
+.sheet-in{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.sheet .fb{margin:0;padding:0;border:0;background:none;max-height:28vh;overflow:auto}
+.sheet .fb p{color:var(--fg);opacity:.8}
+.btn.main{width:100%;font-size:18px;padding:16px;border-radius:16px;color:var(--paper)}
+.qcard .qq.long{font-size:17px;font-weight:600}
+.sheet.good .btn.main{background:var(--ok);box-shadow:0 4px 0 color-mix(in srgb,var(--ok) 60%,#000)}
+.sheet.badsheet .btn.main{background:var(--bad);box-shadow:0 4px 0 color-mix(in srgb,var(--bad) 60%,#000)}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.navbar{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.navbar .btn{font-size:17px;padding:16px 10px;border-radius:16px}
+.navbar .btn:disabled{opacity:.45;cursor:default;box-shadow:none}
+.btn.main:disabled{background:var(--line);color:var(--muted)}
+.extra-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:22px 0 8px}
+.extra-actions .tool{font-size:13px;color:var(--muted);font-weight:500}
+.extra-actions .tool.danger{color:#fff}
+.flashbar{display:grid;grid-template-columns:64px 1fr 1fr;gap:10px}
+.flashbar .btn:disabled{opacity:.4;box-shadow:none}
+.flashbar .btn{font-size:18px;padding:16px}
 .actions{position:sticky;bottom:0;z-index:4;background:var(--bg);padding:10px 0 max(10px,env(safe-area-inset-bottom));margin-top:14px;justify-content:space-between}
 @media (max-width:520px){
   body{padding-bottom:16px}
@@ -173,6 +203,7 @@ function topicPct(t){const m=mastered();const l=t.list();return Math.round(l.fil
 
 // ===== главный экран =====
 function home(){
+  document.body.style.paddingBottom="";
   stopTimer();
   const best=store.get("best",0),mis=Object.keys(mistakes()).length;
   const all=TOPICS[3];
@@ -240,6 +271,7 @@ function resumeGame(){
   G.view=G.i;window.scrollTo(0,0);renderQ();
 }
 function reviewMistakes(){
+  document.body.style.paddingBottom="";
   stopTimer();window.scrollTo(0,0);
   const l=Object.values(mistakes());
   app.innerHTML=`<h1>Мои ошибки</h1><p class="sub">${l.length?"Прочитай правильные ответы, потом сыграй в «Работу над ошибками».":"Ошибок нет."}</p>
@@ -259,26 +291,33 @@ function renderQ(){
     <span class="score">${G.score}</span>
   </div>
   ${G.calm?"":`<div class="timer${past?" paused":""}" id="tm"><i id="tb" style="width:${(q.left??0)/TIME*100}%"></i></div>`}
-  <div class="progress">${past?`<b style="color:var(--ink)">просмотр прошлого вопроса</b> · `:""}вопрос ${idx+1}${G.k==="mix"&&!G.calm?"":" из "+G.list.length} · серия ${G.combo}</div>
-  <div class="qcard"><div class="tag">${esc(q.tag)}</div><p class="qq">${esc(q.q)}</p></div>
+  <div class="progress" style="margin-top:8px">${past?`<b style="color:var(--ink)">просмотр прошлого</b> · `:""}вопрос ${idx+1}${G.k==="mix"&&!G.calm?"":" из "+G.list.length}</div>
+  <div class="qcard"><div class="tag">${esc(q.tag)}</div><p class="qq${q.q.length>90?" long":""}">${esc(q.q)}</p></div>
   <div class="answers">${q.opts.map((o,j)=>{let c="";if(done){c=o===q.a?"ok":j===q.chosen?"bad":"dim"}
     return`<button class="ans ${c}" data-j="${j}" ${done?"disabled":""} style="${done?"animation:none":""}"><span class="k">${j+1}</span>${esc(o)}</button>`}).join("")}</div>
-  <div id="fb">${done?fbHtml(q):""}</div>
-  <div class="row actions">
-    <div class="row"><button class="btn ghost" id="back" ${idx===0?"disabled style='opacity:.4'":""}>← Назад</button><button class="btn ghost" id="quit" title="Игра сохранится, продолжишь из меню">Меню</button><button class="btn ghost" id="fin">Завершить</button></div>
-    ${past?`<button class="btn" id="fwd">${idx+1===G.i?"К текущему →":"Вперёд →"}</button>`:`<button class="btn" id="next" ${done?"":"hidden"}>Дальше →</button>`}
-  </div>`;
+  <div class="extra-actions"><button class="tool" id="quit">Меню (игра сохранится)</button><button class="tool" id="fin">Завершить игру</button></div>
+  <div class="sheet ${done?(q.opts[q.chosen]===q.a?"good":"badsheet"):""}" id="sheet" style="${done?"":"animation:none"}"><div class="sheet-in">
+    ${done?`<div id="fb">${fbHtml(q)}</div>`:""}
+    <div class="navbar">
+      <button class="btn ghost" id="back" ${idx===0?"disabled":""}>← Назад</button>
+      ${past?`<button class="btn main" id="fwd">${idx+1===G.i?"К текущему →":"Вперёд →"}</button>`:`<button class="btn main" id="next" ${done?"":"disabled"}>${done?"Дальше →":"Выбери ответ"}</button>`}
+    </div>
+  </div></div>`;
+  fitSheet();
   if(live)app.querySelectorAll(".ans").forEach(b=>b.onclick=()=>answer(+b.dataset.j));
   $("#quit").onclick=()=>{stopTimer();saveGame();home()};
   // двойное подтверждение: первое нажатие спрашивает, второе (в течение 4 секунд) завершает
   $("#fin").onclick=e=>{const b=e.currentTarget;
     if(b.dataset.armed){endGame();return}
-    b.dataset.armed="1";b.textContent="Точно завершить?";b.classList.remove("ghost");b.classList.add("no");
-    setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Завершить";b.classList.add("ghost");b.classList.remove("no")}},4000)};
+    b.dataset.armed="1";b.textContent="Точно завершить? Нажми ещё раз";b.classList.add("danger");
+    setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Завершить игру";b.classList.remove("danger")}},4000)};
   $("#back").onclick=goBack;
-  if(past)$("#fwd").onclick=goFwd;else $("#next").onclick=()=>{G.i++;nextQ()};
+  if(past)$("#fwd").onclick=goFwd;else if($("#next"))$("#next").onclick=()=>{G.i++;nextQ()};
   if(live&&!G.calm)startTimer(q);
 }
+// отступ снизу под выезжающую панель, чтобы она не закрывала ответы
+function fitSheet(){const s=$("#sheet");document.body.style.paddingBottom=s?(s.offsetHeight+16)+"px":""}
+window.addEventListener("resize",fitSheet);
 function fbHtml(q){
   const ok=q.opts[q.chosen]===q.a;
   return`<div class="fb"><span class="v ${ok?"ok":"bad"}">${ok?"Верно!":q.chosen<0?"Время вышло":"Мимо"}</span>${ok?"":` — правильно: <b>${esc(q.a)}</b>`}${q.x?`<p>${esc(q.x)}</p>`:""}</div>`;
@@ -308,9 +347,10 @@ function answer(j){
   renderQ();
   if(ok){const f=document.createElement("div");f.className="float";f.textContent="+"+gained;document.body.appendChild(f);setTimeout(()=>f.remove(),1000)}
   if(ok&&!q.x){setTimeout(()=>{if(G&&G.view===G.i&&G.list[G.i]===q){G.i++;nextQ()}},900)}
-  else{const fb=$("#fb .fb");if(fb)fb.scrollIntoView({block:"nearest",behavior:"smooth"});const n=$("#next");if(n)n.focus({preventScroll:true})}
+  else{const n=$("#next");if(n)n.focus({preventScroll:true})}
 }
 function endGame(){
+  document.body.style.paddingBottom="";
   stopTimer();store.set("game",null);window.scrollTo(0,0);
   const total=G.right+G.wrong.length;
   const best=store.get("best",0);const isBest=G.score>best;if(isBest)store.set("best",G.score);
@@ -342,6 +382,7 @@ function flashBack(){
   F.queue.unshift(h.c);F.on=true;drawFlash();
 }
 function drawFlash(){
+  document.body.style.paddingBottom="";
   stopTimer();
   if(!F.queue.length){app.innerHTML=`<div class="end"><div class="big">Всё!</div><p>Все ${F.total} карточек выучены. Теперь проверь себя в игре.</p><div class="row center"><button class="btn" id="play">Играть</button><button class="btn ghost" id="menu">Меню</button></div></div>`;
     $("#play").onclick=()=>startGame(F.d==="terms"?"terms":"people");$("#menu").onclick=home;return}
@@ -352,9 +393,12 @@ function drawFlash(){
     <div class="face"><span class="hint">${F.d==="terms"?"что это?":"чем известен?"}</span><div class="t">${esc(c.t)}</div><span class="hint">нажми, чтобы перевернуть</span></div>
     <div class="face back"><div class="t" style="font-size:16px;color:var(--muted)">${esc(c.t)}</div><div class="d">${esc(c.d)}</div>${c.x?`<div class="x">${esc(c.x)}</div>`:""}</div>
   </div></div>
-  <div class="row center"><button class="btn no" id="no">Не знаю</button><button class="btn yes" id="yes">Знаю</button></div>
-  <p class="hint" style="text-align:center">пробел — перевернуть · ← не знаю · → знаю · Backspace — назад</p>
-  <div class="row center"><button class="btn ghost" id="fback" ${F.hist.length?"":"disabled style='opacity:.4'"}>← Назад</button><button class="btn ghost" id="menu">Меню</button></div>`;
+  <p class="hint" style="text-align:center">нажми на карточку, чтобы перевернуть</p>
+  <div class="extra-actions"><button class="tool" id="menu">Меню</button></div>
+  <div class="sheet" id="sheet" style="animation:none"><div class="sheet-in">
+    <div class="flashbar"><button class="btn ghost" id="fback" ${F.hist.length?"":"disabled"} aria-label="Предыдущая карточка">←</button><button class="btn no" id="no">Не знаю</button><button class="btn yes" id="yes">Знаю</button></div>
+  </div></div>`;
+  fitSheet();
   $("#fl").onclick=()=>{F.on=!F.on;$("#fl").classList.toggle("on",F.on)};
   $("#yes").onclick=()=>{const x=F.queue.shift();F.hist.push({c:x,k:1});F.known++;F.on=false;drawFlash()};
   $("#no").onclick=()=>{const x=F.queue.shift();F.queue.splice(Math.min(3,F.queue.length),0,x);F.hist.push({c:x,k:0});F.on=false;drawFlash()};
